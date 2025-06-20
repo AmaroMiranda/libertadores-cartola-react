@@ -16,25 +16,15 @@ const JWT_SECRET = process.env.JWT_SECRET;
 // --- Middlewares ---
 const allowedOrigins = [
   'http://localhost:3000',
-  'https://libertadores-cartola.vercel.app',
- 'https://cartola-libertadors.onrender.com'
+  'https://libertadores-cartola-frontend.onrender.com', // URL do Frontend na Render
+  'https://cartola-libertadors.onrender.com' // Outro URL do Frontend na Render
 ];
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Permite pedidos sem 'origin' (ex: Postman, apps mobile)
-    if (!origin) return callback(null, true);
-    
-    // Permite se a origem estiver na lista principal
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
       return callback(null, true);
     }
-    
-    // Regra flexível para permitir qualquer subdomínio de deploy da Vercel para este projeto
-    if (origin.endsWith('.vercel.app') && origin.includes('libertadores-cartola')) {
-      return callback(null, true);
-    }
-    
     return callback(new Error('A política de CORS para este site não permite acesso da Origem especificada.'), false);
   }
 }));
@@ -157,15 +147,18 @@ async function fetchAndSaveScores(teamsToFetch, rounds) {
     if (!teamsToFetch || teamsToFetch.length === 0 || validRounds.length === 0) return;
 
     for (const team of teamsToFetch) {
+        const teamDocument = await Team.findById(team._id);
+        if(!teamDocument) continue;
+
         let hasChanged = false;
         for (const rodada of validRounds) {
-            console.log(`Buscando: Time ${team.nome}, Rodada ${rodada}`);
+            console.log(`Buscando: Time ${teamDocument.nome}, Rodada ${rodada}`);
             await new Promise(resolve => setTimeout(resolve, 250));
-            const pontos = await getPontuacaoDaRodada(team.cartola_id, rodada);
-            team.pontuacoes.set(`rodada_${rodada}`, pontos);
+            const pontos = await getPontuacaoDaRodada(teamDocument.cartola_id, rodada);
+            teamDocument.pontuacoes.set(`rodada_${rodada}`, pontos);
             hasChanged = true;
         }
-        if(hasChanged) await team.save();
+        if(hasChanged) await teamDocument.save();
     }
 }
 
@@ -348,12 +341,14 @@ app.get('/api/fase-de-grupos', async (req, res) => {
         const groupRounds = settings?.group_stage_rounds || [];
         const resultados = teams.map(team => {
             const total = groupRounds.reduce((sum, rodada) => {
-                return sum + (team.pontuacoes.get(`rodada_${rodada}`) || 0);
+                // CORREÇÃO: Acessar pontuações como propriedades de objeto
+                return sum + (team.pontuacoes[`rodada_${rodada}`] || 0);
             }, 0);
-            return { ...team, id: team._id.toString(), pontuacoes: Object.fromEntries(team.pontuacoes), total };
+            return { ...team, id: team._id.toString(), total };
         });
         res.json(resultados);
     } catch (error) {
+        console.error("Erro na rota /api/fase-de-grupos: ", error);
         res.status(500).json({ message: 'Erro ao processar fase de grupos.' });
     }
 });
@@ -386,8 +381,8 @@ app.get('/api/confrontos', async (req, res) => {
                     league_round: leagueRound,
                     cartola_round: cartolaRound || 'A Definir',
                     group: groupName,
-                    home_team: { ...match.home, id: match.home._id.toString(), score: cartolaRound ? match.home.pontuacoes?.get(`rodada_${cartolaRound}`) || 0 : 0 },
-                    away_team: { ...match.away, id: match.away._id.toString(), score: cartolaRound ? match.away.pontuacoes?.get(`rodada_${cartolaRound}`) || 0 : 0 },
+                    home_team: { ...match.home, id: match.home._id.toString(), score: cartolaRound ? match.home.pontuacoes?.[`rodada_${cartolaRound}`] || 0 : 0 },
+                    away_team: { ...match.away, id: match.away._id.toString(), score: cartolaRound ? match.away.pontuacoes?.[`rodada_${cartolaRound}`] || 0 : 0 },
                 });
             });
         }
@@ -407,7 +402,7 @@ async function processarMataMata() {
     
     const groupRounds = settingsData?.group_stage_rounds || [];
     const teamsWithTotals = teamsData.map(team => {
-        const total = groupRounds.reduce((sum, r) => sum + (team.pontuacoes.get(`rodada_${r}`) || 0), 0);
+        const total = groupRounds.reduce((sum, r) => sum + (team.pontuacoes[`rodada_${r}`] || 0), 0);
         return { ...team, id: team._id.toString(), total };
     });
     
@@ -437,13 +432,10 @@ async function processarMataMata() {
             const rodadaIda = roundsData?.[0];
             const rodadaVolta = roundsData?.[1];
 
-            const t1Data = teamsData.find(t => t._id.equals(confronto.team1._id));
-            const t2Data = teamsData.find(t => t._id.equals(confronto.team2._id));
-            
-            const s1_ida = t1Data?.pontuacoes.get(`rodada_${rodadaIda}`);
-            const s2_ida = t2Data?.pontuacoes.get(`rodada_${rodadaIda}`);
-            const s1_volta = t1Data?.pontuacoes.get(`rodada_${rodadaVolta}`);
-            const s2_volta = t2Data?.pontuacoes.get(`rodada_${rodadaVolta}`);
+            const s1_ida = confronto.team1.pontuacoes?.[`rodada_${rodadaIda}`];
+            const s2_ida = confronto.team2.pontuacoes?.[`rodada_${rodadaIda}`];
+            const s1_volta = confronto.team1.pontuacoes?.[`rodada_${rodadaVolta}`];
+            const s2_volta = confronto.team2.pontuacoes?.[`rodada_${rodadaVolta}`];
 
             confronto.scores = { ida: [s1_ida, s2_ida], volta: [s1_volta, s2_volta] };
             
