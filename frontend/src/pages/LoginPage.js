@@ -41,7 +41,10 @@ const LoginPage = () => {
     try {
       // A chamada agora é mais limpa, usando o 'api'
       // e apenas o caminho da rota, sem o URL base.
-      const response = await api.post("/auth/login", { username, password });
+      const response = await api.post("/api/auth/login", {
+        username,
+        password,
+      });
       login(response.data.token);
       navigate("/admin");
     } catch (err) {
