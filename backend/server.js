@@ -17,7 +17,7 @@ const JWT_SECRET = process.env.JWT_SECRET;
 app.use(cors({
   origin: [
     'http://localhost:3000', // Para desenvolvimento local
-    'https://cartola-libertadores.vercel.app/' 
+    'https://libertadores-cartola.vercel.app' 
   ]
 }));
 app.use(express.json());
