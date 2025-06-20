@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET;
 
 // --- Middlewares ---
-// ALTERAÇÃO CRÍTICA: Adicionado o URL correto do frontend da Vercel
+// ALTERAÇÃO CRÍTICA: Adicionado o URL de produção exato e correto.
 app.use(cors({
   origin: [
     'http://localhost:3000', // Para desenvolvimento local
@@ -28,7 +28,7 @@ mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ Conectado com sucesso à MongoDB Atlas!'))
   .catch(err => console.error('🔴 Falha ao conectar à MongoDB:', err));
 
-// --- Definição dos Modelos (Schemas) para a Base de Dados ---
+// --- Definição dos Modelos (Schemas) ---
 const UserSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
@@ -273,9 +273,9 @@ app.post('/api/scores/refresh/knockout', verifyToken, async (req, res) => {
         };
 
         await processStage('oitavas', koSettings.oitavas);
-        await processStage('quartas', koRounds.quartas);
-        await processStage('semis', koRounds.semis);
-        await processStage('final', koRounds.final);
+        await processStage('quartas', koSettings.quartas);
+        await processStage('semis', koSettings.semis);
+        await processStage('final', koSettings.final);
 
         res.status(200).json({ message: "Busca de pontuações do mata-mata concluída com sucesso!" });
     } catch (error) {
@@ -386,18 +386,18 @@ app.get('/api/confrontos', async (req, res) => {
 async function processarMataMata() {
     const teamsData = await Team.find().lean();
     const settingsData = await Settings.findOne({ singleton: true }).lean();
-
+    
     const groupRounds = settingsData?.group_stage_rounds || [];
     const teamsWithTotals = teamsData.map(team => {
         const total = groupRounds.reduce((sum, r) => sum + (team.pontuacoes.get(`rodada_${r}`) || 0), 0);
         return { ...team, id: team._id.toString(), total };
     });
-
+    
     const teamsByGroup = teamsWithTotals.reduce((acc, team) => {
         if (team.group) (acc[team.group] = acc[team.group] || []).push(team);
         return acc;
     }, {});
-
+    
     for (const group in teamsByGroup) {
         teamsByGroup[group].sort((a, b) => b.total - a.total);
     }
@@ -408,7 +408,7 @@ async function processarMataMata() {
         { id: 'O5', team1: teamsByGroup['B']?.[0], team2: teamsByGroup['A']?.[1] }, { id: 'O6', team1: teamsByGroup['D']?.[0], team2: teamsByGroup['C']?.[1] },
         { id: 'O7', team1: teamsByGroup['F']?.[0], team2: teamsByGroup['E']?.[1] }, { id: 'O8', team1: teamsByGroup['H']?.[0], team2: teamsByGroup['G']?.[1] },
     ];
-
+    
     const processarFase = (confrontos, roundsData) => {
         const vencedores = [];
         for (const confronto of confrontos) {
@@ -421,32 +421,32 @@ async function processarMataMata() {
 
             const t1Data = teamsData.find(t => t._id.equals(confronto.team1._id));
             const t2Data = teamsData.find(t => t._id.equals(confronto.team2._id));
-
+            
             const s1_ida = t1Data?.pontuacoes.get(`rodada_${rodadaIda}`);
             const s2_ida = t2Data?.pontuacoes.get(`rodada_${rodadaIda}`);
             const s1_volta = t1Data?.pontuacoes.get(`rodada_${rodadaVolta}`);
             const s2_volta = t2Data?.pontuacoes.get(`rodada_${rodadaVolta}`);
 
             confronto.scores = { ida: [s1_ida, s2_ida], volta: [s1_volta, s2_volta] };
-
+            
             const allScoresPresent = [s1_ida, s2_ida, s1_volta, s2_volta].every(score => typeof score === 'number');
             if (!allScoresPresent) {
                 vencedores.push(null); continue;
             }
-
+            
             const agg1 = s1_ida + s1_volta;
             const agg2 = s2_ida + s2_volta;
             confronto.aggregates = [agg1, agg2];
-
+            
             if (agg1 > agg2) confronto.winnerTeam = confronto.team1;
             else if (agg2 > agg1) confronto.winnerTeam = confronto.team2;
             else confronto.winnerTeam = (confronto.team1.total || 0) >= (confronto.team2.total || 0) ? confronto.team1 : confronto.team2;
-
+            
             vencedores.push(confronto.winnerTeam);
         }
         return { confrontos, vencedores };
     };
-
+    
     const koRounds = settingsData?.knockout_rounds || {};
     const { confrontos: oitavasP, vencedores: vOitavas } = processarFase(oitavas, koRounds.oitavas);
     const quartas = [
@@ -460,7 +460,7 @@ async function processarMataMata() {
     const { confrontos: semisP, vencedores: vSemis } = processarFase(semis, koRounds.semis);
     const final = [{ id: 'F1', team1: vSemis[0], team2: vSemis[1] }];
     const { confrontos: finalP, vencedores: vFinal } = processarFase(final, koRounds.final);
-
+    
     return { oitavasP, quartasP, semisP, finalP, vFinal };
 }
 
