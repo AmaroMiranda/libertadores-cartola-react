@@ -1,6 +1,7 @@
 // src/pages/AdminPage.js
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import axios from "axios";
+// import axios from "axios"; // JÁ NÃO É NECESSÁRIO
+import api from "../services/api"; // IMPORTAÇÃO DO NOVO CLIENTE
 import {
   Container,
   Typography,
@@ -36,8 +37,9 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001/api";
+// const API_URL = ...; // JÁ NÃO É NECESSÁRIO
 
+// Componente para o Painel de Configurações (sem alterações de lógica)
 const SettingsPanel = ({
   rounds,
   knockoutRounds,
@@ -107,7 +109,7 @@ const SettingsPanel = ({
   </Paper>
 );
 
-// Componente para o Painel de Busca de Pontuações
+// Componente para o Painel de Busca de Pontuações (sem alterações de lógica)
 const ScoresPanel = ({
   onFetchGroup,
   onFetchKnockout,
@@ -163,11 +165,11 @@ const ScoresPanel = ({
   </Paper>
 );
 
-// Componente para o Painel de Gestão de Times
+// Componente para o Painel de Gestão de Times (sem alterações de lógica)
 const TeamsPanel = ({
-  teams, // ALTERAÇÃO: Recebe a lista de times (já filtrada)
-  teamFilter, // ALTERAÇÃO: Recebe o valor do filtro
-  onTeamFilterChange, // ALTERAÇÃO: Recebe a função para mudar o filtro
+  teams,
+  teamFilter,
+  onTeamFilterChange,
   onRefresh,
   isRefreshing,
   onSearch,
@@ -265,7 +267,6 @@ const TeamsPanel = ({
         Times na Competição
       </Typography>
 
-      {/* NOVO: Campo de texto para filtrar a lista de times existentes */}
       <Paper elevation={2} sx={{ p: 2, mb: 2 }}>
         <TextField
           label="Filtrar times por nome, cartoleiro ou grupo..."
@@ -412,7 +413,6 @@ function AdminPage() {
   const [isFetchingKnockoutScores, setIsFetchingKnockoutScores] =
     useState(false);
 
-  // NOVO: Estado para o filtro da lista de times
   const [teamFilter, setTeamFilter] = useState("");
 
   const [feedback, setFeedback] = useState({
@@ -426,7 +426,7 @@ function AdminPage() {
 
   const fetchMyTeams = useCallback(async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/teams`);
+      const response = await api.get("/teams");
       setMyTeams(
         (response.data || []).sort((a, b) => a.nome.localeCompare(b.nome))
       );
@@ -437,7 +437,7 @@ function AdminPage() {
 
   const fetchSettings = useCallback(async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/settings`);
+      const response = await api.get("/settings");
       const { group_stage_rounds = [], knockout_rounds = {} } =
         response.data || {};
       setRounds(group_stage_rounds.join(", "));
@@ -494,7 +494,7 @@ function AdminPage() {
           parseRound(knockoutRounds.final.volta),
         ],
       };
-      await axios.put(`${API_URL}/api/settings`, {
+      await api.put("/settings", {
         group_stage_rounds: groupRounds,
         knockout_rounds: koRoundsPayload,
       });
@@ -511,9 +511,7 @@ function AdminPage() {
     setIsFetchingGroupScores(true);
     showFeedback("info", "Iniciando busca (Fase de Grupos)...");
     try {
-      const response = await axios.post(
-        `${API_URL}/api/scores/refresh/group-stage`
-      );
+      const response = await api.post("/scores/refresh/group-stage");
       showFeedback("success", response.data.message);
     } catch (err) {
       showFeedback(
@@ -529,9 +527,7 @@ function AdminPage() {
     setIsFetchingKnockoutScores(true);
     showFeedback("info", "Iniciando busca (Mata-Mata)... Isso pode demorar.");
     try {
-      const response = await axios.post(
-        `${API_URL}/api/scores/refresh/knockout`
-      );
+      const response = await api.post("/scores/refresh/knockout");
       showFeedback("success", response.data.message);
     } catch (err) {
       showFeedback(
@@ -551,7 +547,7 @@ function AdminPage() {
         url_escudo: teamToAdd.url_escudo_png,
         nome_cartola: teamToAdd.nome_cartola,
       };
-      await axios.post(`${API_URL}/api/teams`, newTeamData);
+      await api.post("/teams", newTeamData);
       setSearchTerm("");
       setSearchResults([]);
       fetchMyTeams();
@@ -566,7 +562,7 @@ function AdminPage() {
 
   const handleDeleteTeam = async (id) => {
     try {
-      await axios.delete(`${API_URL}/api/teams/${id}`);
+      await api.delete(`/teams/${id}`);
       fetchMyTeams();
       showFeedback("success", "Time removido com sucesso!");
     } catch (err) {
@@ -578,7 +574,7 @@ function AdminPage() {
     setIsRefreshing(true);
     showFeedback("info", "Atualizando dados de todos os times...");
     try {
-      await axios.post(`${API_URL}/api/teams/refresh-all`);
+      await api.post("/teams/refresh-all");
       fetchMyTeams();
       showFeedback("success", "Dados dos times atualizados!");
     } catch (err) {
@@ -596,7 +592,7 @@ function AdminPage() {
     );
     setMyTeams(updatedTeams);
     try {
-      await axios.put(`${API_URL}/api/teams/${teamId}`, { group: newGroup });
+      await api.put(`/teams/${teamId}`, { group: newGroup });
       showFeedback("success", "Grupo do time atualizado.");
     } catch (err) {
       showFeedback("error", "Falha ao atualizar o grupo do time. Revertendo.");
@@ -612,7 +608,6 @@ function AdminPage() {
     }));
   };
 
-  // NOVO: Lógica para filtrar os times exibidos
   const filteredTeams = useMemo(() => {
     if (!teamFilter) {
       return myTeams;
@@ -640,9 +635,7 @@ function AdminPage() {
     const delayDebounceFn = setTimeout(async () => {
       setIsLoadingSearch(true);
       try {
-        const response = await axios.get(
-          `${API_URL}/api/search-teams?q=${searchTerm}`
-        );
+        const response = await api.get(`/search-teams?q=${searchTerm}`);
         setSearchResults(response.data);
       } catch (err) {
         showFeedback("error", "Não foi possível buscar os times.");
@@ -651,7 +644,7 @@ function AdminPage() {
       }
     }, 500);
     return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm]);
+  }, [searchTerm, showFeedback]);
 
   return (
     <Container maxWidth="lg">
@@ -692,7 +685,7 @@ function AdminPage() {
       <Divider sx={{ my: 4 }} />
 
       <TeamsPanel
-        teams={filteredTeams} // Passa a lista já filtrada
+        teams={filteredTeams}
         teamFilter={teamFilter}
         onTeamFilterChange={(e) => setTeamFilter(e.target.value)}
         isRefreshing={isRefreshing}

@@ -1,5 +1,7 @@
+// src/pages/MataMataPage.js
 import React, { useState, useEffect, useCallback } from "react";
-import axios from "axios";
+// import axios from "axios"; // JÁ NÃO É NECESSÁRIO
+import api from "../services/api"; // IMPORTAÇÃO DO NOVO CLIENTE
 import {
   Typography,
   CircularProgress,
@@ -13,8 +15,7 @@ import SwipeLeftIcon from "@mui/icons-material/SwipeLeft";
 import BracketMatch from "../components/BracketMatch";
 import ChampionColumn from "../components/ChampionColumn";
 
-const API_URL_MATA_MATA =
-  process.env.REACT_APP_API_URL || "http://localhost:3001/api";
+// const API_URL_MATA_MATA = ...; // JÁ NÃO É NECESSÁRIO
 
 const Connector = ({ row, col, span, isWinnerPath }) => (
   <Box
@@ -185,7 +186,8 @@ function MataMataPage() {
     setLoading(true);
     setError("");
     try {
-      const response = await axios.get(`${API_URL_MATA_MATA}/api/mata-mata`);
+      // A chamada agora usa o cliente API centralizado
+      const response = await api.get("/mata-mata");
       setBracketData(response.data);
     } catch (err) {
       setError(
@@ -232,7 +234,6 @@ function MataMataPage() {
         <Typography variant="h4" component="h1" sx={{ fontWeight: "bold" }}>
           Fase de Mata-Mata
         </Typography>
-        {}
       </Box>
 
       {isSmallScreen && !loading && bracketData && (

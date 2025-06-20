@@ -1,5 +1,7 @@
+// src/pages/ConfrontosPage.js
 import React, { useState, useEffect, useMemo } from "react";
-import axios from "axios";
+// import axios from "axios"; // JÁ NÃO É NECESSÁRIO
+import api from "../services/api"; // IMPORTAÇÃO DO NOVO CLIENTE
 import {
   Typography,
   CircularProgress,
@@ -19,14 +21,13 @@ import { pdf } from "@react-pdf/renderer";
 import { saveAs } from "file-saver";
 import RelatorioConfrontosDocument from "../components/pdf/RelatorioConfrontosDocument";
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001/api";
+// const API_URL = ...; // JÁ NÃO É NECESSÁRIO
 
 function ConfrontosPage() {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
-  // NOVO: Estado para controlar a rodada selecionada
   const [selectedRound, setSelectedRound] = useState("all");
 
   useEffect(() => {
@@ -34,7 +35,8 @@ function ConfrontosPage() {
       setLoading(true);
       setError("");
       try {
-        const response = await axios.get(`${API_URL}/api/confrontos`);
+        // A chamada agora usa o cliente API centralizado
+        const response = await api.get("/confrontos");
         setMatches(response.data);
       } catch (err) {
         setError(
@@ -56,7 +58,6 @@ function ConfrontosPage() {
     }, {});
   }, [matches]);
 
-  // Lógica de geração de PDF atualizada
   const handleGeneratePdf = async () => {
     if (selectedRound === "" || !matchesByRound) return;
     setIsGeneratingPdf(true);
@@ -65,7 +66,6 @@ function ConfrontosPage() {
       let dataForPdf = matchesByRound;
       let fileName = "relatorio-confrontos-todos.pdf";
 
-      // Filtra os dados se uma rodada específica for selecionada
       if (selectedRound !== "all") {
         dataForPdf = { [selectedRound]: matchesByRound[selectedRound] };
         const roundNumber =
@@ -73,10 +73,13 @@ function ConfrontosPage() {
         fileName = `relatorio-confrontos-rodada-${roundNumber}.pdf`;
       }
 
+      // CORREÇÃO: Garante que o URL base passado para o PDF não tenha o /api duplicado.
+      const API_BASE_URL = api.defaults.baseURL.replace("/api", "");
+
       const doc = (
         <RelatorioConfrontosDocument
           matchesByRound={dataForPdf}
-          apiUrl={API_URL}
+          apiUrl={API_BASE_URL}
         />
       );
       const blob = await pdf(doc).toBlob();
@@ -108,7 +111,6 @@ function ConfrontosPage() {
           Confrontos da Fase de Grupos
         </Typography>
 
-        {/* NOVO: Controles de exportação com seletor de rodada */}
         {podeGerarPdf && (
           <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
             <FormControl sx={{ minWidth: 200 }} size="small">
@@ -189,7 +191,7 @@ function ConfrontosPage() {
           ) : (
             <Alert severity="info">
               Nenhum confronto gerado. Verifique se há grupos completos de 4
-              times e 6 rodadas configuradas no Painel de Controlo.
+              times e 6 rodadas configuradas no Painel de Gestão.
             </Alert>
           )}
         </Box>

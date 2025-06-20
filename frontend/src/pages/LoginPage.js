@@ -1,7 +1,7 @@
 // src/pages/LoginPage.js
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+// import axios from 'axios'; // JÁ NÃO PRECISAMOS DO AXIOS DIRETAMENTE
 import { useAuth } from "../context/AuthContext";
 import {
   Container,
@@ -18,7 +18,10 @@ import {
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001/api";
+// IMPORTAÇÃO DO NOVO CLIENTE API
+import api from "../services/api";
+
+// const API_URL = '...'; // JÁ NÃO PRECISAMOS DESTA LINHA
 
 const LoginPage = () => {
   const [username, setUsername] = useState("");
@@ -29,7 +32,6 @@ const LoginPage = () => {
   const navigate = useNavigate();
 
   const [showPassword, setShowPassword] = useState(false);
-
   const handleClickShowPassword = () => setShowPassword((show) => !show);
   const handleMouseDownPassword = (event) => {
     event.preventDefault();
@@ -40,10 +42,9 @@ const LoginPage = () => {
     setLoading(true);
     setError("");
     try {
-      const response = await axios.post(`${API_URL}/api/auth/login`, {
-        username,
-        password,
-      });
+      // A CHAMADA AGORA É MAIS LIMPA, USANDO O 'api'
+      // Note que usamos apenas o caminho da rota, sem o URL base.
+      const response = await api.post("/auth/login", { username, password });
       login(response.data.token);
       navigate("/admin");
     } catch (err) {
@@ -108,8 +109,7 @@ const LoginPage = () => {
                     onMouseDown={handleMouseDownPassword}
                     edge="end"
                   >
-                    {/* CORREÇÃO: Lógica dos ícones invertida para a correta */}
-                    {showPassword ? <Visibility /> : <VisibilityOff />}
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
                   </IconButton>
                 </InputAdornment>
               ),

@@ -1,6 +1,7 @@
 // src/pages/HomePage.js
 import React, { useState, useEffect, useCallback } from "react";
-import axios from "axios";
+// import axios from "axios"; // JÁ NÃO É NECESSÁRIO
+import api from "../services/api"; // IMPORTAÇÃO DO NOVO CLIENTE
 import TabelaGrupo from "../components/TabelaGrupo";
 import {
   Typography,
@@ -10,28 +11,27 @@ import {
   Button,
 } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
-// ALTERAÇÃO: Importações necessárias para a nova abordagem
 import { pdf } from "@react-pdf/renderer";
 import { saveAs } from "file-saver";
 import RelatorioGruposDocument from "../components/pdf/RelatorioGruposDocument";
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001/api";
+// const API_URL = ...; // JÁ NÃO É NECESSÁRIO
 
 function HomePage() {
   const [grupos, setGrupos] = useState({});
   const [settings, setSettings] = useState({ group_stage_rounds: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  // NOVO ESTADO: Controla o loading da geração do PDF
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   const fetchResultados = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
+      // As chamadas agora usam o cliente API centralizado
       const [resultadosRes, settingsRes] = await Promise.all([
-        axios.get(`${API_URL}/api/fase-de-grupos`),
-        axios.get(`${API_URL}/api/settings`),
+        api.get("/fase-de-grupos"),
+        api.get("/settings"),
       ]);
       const resultadosData = resultadosRes.data || [];
       const gruposData = resultadosData.reduce((acc, time) => {
@@ -59,21 +59,20 @@ function HomePage() {
     fetchResultados();
   }, [fetchResultados]);
 
-  // NOVA FUNÇÃO: Gera e baixa o PDF quando chamada
   const handleGeneratePdf = async () => {
     setIsGeneratingPdf(true);
     try {
-      // 1. Cria a estrutura do documento
+      // Garante que o URL base passado para o PDF não tenha o /api duplicado.
+      const API_BASE_URL = api.defaults.baseURL.replace("/api", "");
+
       const doc = (
         <RelatorioGruposDocument
           grupos={grupos}
           rounds={settings.group_stage_rounds || []}
-          apiUrl={API_URL}
+          apiUrl={API_BASE_URL}
         />
       );
-      // 2. Renderiza o documento para um "blob" (um tipo de arquivo em memória)
       const blob = await pdf(doc).toBlob();
-      // 3. Usa a biblioteca file-saver para iniciar o download do blob
       saveAs(blob, "classificacao-libertadores-cartola.pdf");
     } catch (pdfError) {
       console.error("Erro ao gerar o PDF:", pdfError);
@@ -101,7 +100,6 @@ function HomePage() {
           Classificação da Fase de Grupos
         </Typography>
 
-        {/* ALTERAÇÃO: Substituição do PDFDownloadLink por um Button com onClick */}
         {podeGerarPdf && (
           <Button
             variant="contained"

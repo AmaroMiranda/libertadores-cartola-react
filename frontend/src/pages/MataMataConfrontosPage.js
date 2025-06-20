@@ -1,5 +1,7 @@
+// src/pages/MataMataConfrontosPage.js
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+// import axios from "axios"; // JÁ NÃO É NECESSÁRIO
+import api from "../services/api"; // IMPORTAÇÃO DO NOVO CLIENTE
 import {
   Typography,
   CircularProgress,
@@ -19,7 +21,7 @@ import { pdf } from "@react-pdf/renderer";
 import { saveAs } from "file-saver";
 import RelatorioMataMataDocument from "../components/pdf/RelatorioMataMataDocument";
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001/api";
+// const API_URL = ...; // JÁ NÃO É NECESSÁRIO
 
 function MataMataConfrontosPage() {
   const [matchesByStage, setMatchesByStage] = useState({});
@@ -40,7 +42,8 @@ function MataMataConfrontosPage() {
       setLoading(true);
       setError("");
       try {
-        const response = await axios.get(`${API_URL}/api/mata-mata-confrontos`);
+        // A chamada agora usa o cliente API centralizado
+        const response = await api.get("/mata-mata-confrontos");
         setMatchesByStage(response.data);
       } catch (err) {
         setError(
@@ -62,7 +65,6 @@ function MataMataConfrontosPage() {
       let stageOrderForPdf = stageOrder;
       let fileName = "relatorio-mata-mata-geral.pdf";
 
-      // Filtra os dados se uma fase específica for selecionada
       if (selectedStage !== "all") {
         dataForPdf = { [selectedStage]: matchesByStage[selectedStage] };
         stageOrderForPdf = [selectedStage];
@@ -73,11 +75,14 @@ function MataMataConfrontosPage() {
         fileName = `relatorio-mata-mata-${stageFileName}.pdf`;
       }
 
+      // Garante que o URL base passado para o PDF não tenha o /api duplicado.
+      const API_BASE_URL = api.defaults.baseURL.replace("/api", "");
+
       const doc = (
         <RelatorioMataMataDocument
           matchesByStage={dataForPdf}
           stageOrder={stageOrderForPdf}
-          apiUrl={API_URL} // Passando a URL base da API
+          apiUrl={API_BASE_URL} // Passando a URL base da API correta
         />
       );
       const blob = await pdf(doc).toBlob();
