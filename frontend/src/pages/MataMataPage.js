@@ -185,7 +185,7 @@ function MataMataPage() {
     setLoading(true);
     setError("");
     try {
-      const response = await axios.get(`${API_URL_MATA_MATA}/mata-mata`);
+      const response = await axios.get(`${API_URL_MATA_MATA}/api/mata-mata`);
       setBracketData(response.data);
     } catch (err) {
       setError(

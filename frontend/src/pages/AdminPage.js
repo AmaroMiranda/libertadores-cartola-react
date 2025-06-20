@@ -426,7 +426,7 @@ function AdminPage() {
 
   const fetchMyTeams = useCallback(async () => {
     try {
-      const response = await axios.get(`${API_URL}/teams`);
+      const response = await axios.get(`${API_URL}/api/teams`);
       setMyTeams(
         (response.data || []).sort((a, b) => a.nome.localeCompare(b.nome))
       );
@@ -437,7 +437,7 @@ function AdminPage() {
 
   const fetchSettings = useCallback(async () => {
     try {
-      const response = await axios.get(`${API_URL}/settings`);
+      const response = await axios.get(`${API_URL}/api/settings`);
       const { group_stage_rounds = [], knockout_rounds = {} } =
         response.data || {};
       setRounds(group_stage_rounds.join(", "));
@@ -494,7 +494,7 @@ function AdminPage() {
           parseRound(knockoutRounds.final.volta),
         ],
       };
-      await axios.put(`${API_URL}/settings`, {
+      await axios.put(`${API_URL}/api/settings`, {
         group_stage_rounds: groupRounds,
         knockout_rounds: koRoundsPayload,
       });
@@ -512,7 +512,7 @@ function AdminPage() {
     showFeedback("info", "Iniciando busca (Fase de Grupos)...");
     try {
       const response = await axios.post(
-        `${API_URL}/scores/refresh/group-stage`
+        `${API_URL}/api/scores/refresh/group-stage`
       );
       showFeedback("success", response.data.message);
     } catch (err) {
@@ -529,7 +529,9 @@ function AdminPage() {
     setIsFetchingKnockoutScores(true);
     showFeedback("info", "Iniciando busca (Mata-Mata)... Isso pode demorar.");
     try {
-      const response = await axios.post(`${API_URL}/scores/refresh/knockout`);
+      const response = await axios.post(
+        `${API_URL}/api/scores/refresh/knockout`
+      );
       showFeedback("success", response.data.message);
     } catch (err) {
       showFeedback(
@@ -549,7 +551,7 @@ function AdminPage() {
         url_escudo: teamToAdd.url_escudo_png,
         nome_cartola: teamToAdd.nome_cartola,
       };
-      await axios.post(`${API_URL}/teams`, newTeamData);
+      await axios.post(`${API_URL}/api/teams`, newTeamData);
       setSearchTerm("");
       setSearchResults([]);
       fetchMyTeams();
@@ -564,7 +566,7 @@ function AdminPage() {
 
   const handleDeleteTeam = async (id) => {
     try {
-      await axios.delete(`${API_URL}/teams/${id}`);
+      await axios.delete(`${API_URL}/api/teams/${id}`);
       fetchMyTeams();
       showFeedback("success", "Time removido com sucesso!");
     } catch (err) {
@@ -576,7 +578,7 @@ function AdminPage() {
     setIsRefreshing(true);
     showFeedback("info", "Atualizando dados de todos os times...");
     try {
-      await axios.post(`${API_URL}/teams/refresh-all`);
+      await axios.post(`${API_URL}/api/teams/refresh-all`);
       fetchMyTeams();
       showFeedback("success", "Dados dos times atualizados!");
     } catch (err) {
@@ -594,7 +596,7 @@ function AdminPage() {
     );
     setMyTeams(updatedTeams);
     try {
-      await axios.put(`${API_URL}/teams/${teamId}`, { group: newGroup });
+      await axios.put(`${API_URL}/api/teams/${teamId}`, { group: newGroup });
       showFeedback("success", "Grupo do time atualizado.");
     } catch (err) {
       showFeedback("error", "Falha ao atualizar o grupo do time. Revertendo.");
@@ -639,7 +641,7 @@ function AdminPage() {
       setIsLoadingSearch(true);
       try {
         const response = await axios.get(
-          `${API_URL}/search-teams?q=${searchTerm}`
+          `${API_URL}/api/search-teams?q=${searchTerm}`
         );
         setSearchResults(response.data);
       } catch (err) {

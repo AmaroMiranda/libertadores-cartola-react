@@ -40,7 +40,7 @@ const LoginPage = () => {
     setLoading(true);
     setError("");
     try {
-      const response = await axios.post(`${API_URL}/auth/login`, {
+      const response = await axios.post(`${API_URL}/api/auth/login`, {
         username,
         password,
       });
