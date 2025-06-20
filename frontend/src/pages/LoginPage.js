@@ -1,7 +1,6 @@
 // src/pages/LoginPage.js
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-// import axios from 'axios'; // JÁ NÃO PRECISAMOS DO AXIOS DIRETAMENTE
 import { useAuth } from "../context/AuthContext";
 import {
   Container,
@@ -20,8 +19,6 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 
 // IMPORTAÇÃO DO NOVO CLIENTE API
 import api from "../services/api";
-
-// const API_URL = '...'; // JÁ NÃO PRECISAMOS DESTA LINHA
 
 const LoginPage = () => {
   const [username, setUsername] = useState("");
@@ -42,8 +39,8 @@ const LoginPage = () => {
     setLoading(true);
     setError("");
     try {
-      // A CHAMADA AGORA É MAIS LIMPA, USANDO O 'api'
-      // Note que usamos apenas o caminho da rota, sem o URL base.
+      // A chamada agora é mais limpa, usando o 'api'
+      // e apenas o caminho da rota, sem o URL base.
       const response = await api.post("/auth/login", { username, password });
       login(response.data.token);
       navigate("/admin");
@@ -70,7 +67,7 @@ const LoginPage = () => {
         }}
       >
         <Typography component="h1" variant="h5">
-          Painel de Controlo
+          Painel de Gestão
         </Typography>
         <Box
           component="form"

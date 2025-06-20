@@ -1,7 +1,6 @@
 // src/pages/AdminPage.js
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-// import axios from "axios"; // JÁ NÃO É NECESSÁRIO
-import api from "../services/api"; // IMPORTAÇÃO DO NOVO CLIENTE
+import api from "../services/api"; // IMPORTAÇÃO DO CLIENTE API
 import {
   Container,
   Typography,
@@ -36,8 +35,6 @@ import {
 import DeleteIcon from "@mui/icons-material/Delete";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
-
-// const API_URL = ...; // JÁ NÃO É NECESSÁRIO
 
 // Componente para o Painel de Configurações (sem alterações de lógica)
 const SettingsPanel = ({
