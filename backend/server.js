@@ -17,7 +17,7 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const allowedOrigins = [
   'http://localhost:3000',
   'https://libertadores-cartola.vercel.app',
-  'https://libertadores-cartola-git-master-amaros-projects-f6fa573c.vercel.app'
+ 'https://cartola-libertadors.onrender.com'
 ];
 
 app.use(cors({
