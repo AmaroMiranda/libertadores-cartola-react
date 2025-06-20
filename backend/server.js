@@ -14,13 +14,31 @@ const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET;
 
 // --- Middlewares ---
-// ALTERAÇÃO CRÍTICA: Adicionado o URL de produção exato e correto.
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://libertadores-cartola.vercel.app',
+  'https://libertadores-cartola-git-master-amaros-projects-f6fa573c.vercel.app'
+];
+
 app.use(cors({
-  origin: [
-    'http://localhost:3000', // Para desenvolvimento local
-    'https://libertadores-cartola.vercel.app' // URL de produção
-  ]
+  origin: function (origin, callback) {
+    // Permite pedidos sem 'origin' (ex: Postman, apps mobile)
+    if (!origin) return callback(null, true);
+    
+    // Permite se a origem estiver na lista principal
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      return callback(null, true);
+    }
+    
+    // Regra flexível para permitir qualquer subdomínio de deploy da Vercel para este projeto
+    if (origin.endsWith('.vercel.app') && origin.includes('libertadores-cartola')) {
+      return callback(null, true);
+    }
+    
+    return callback(new Error('A política de CORS para este site não permite acesso da Origem especificada.'), false);
+  }
 }));
+
 app.use(express.json());
 
 // --- Conexão com a Base de Dados MongoDB ---
