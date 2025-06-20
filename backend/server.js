@@ -14,10 +14,11 @@ const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET;
 
 // --- Middlewares ---
+// ALTERAÇÃO CRÍTICA: Adicionado o URL correto do frontend da Vercel
 app.use(cors({
   origin: [
     'http://localhost:3000', // Para desenvolvimento local
-    'https://libertadores-cartola.vercel.app' 
+    'https://libertadores-cartola-git-master-amaros-projects-f6fa573c.vercel.app' // URL de produção
   ]
 }));
 app.use(express.json());
@@ -382,7 +383,7 @@ async function processarMataMata() {
     
     const groupRounds = settingsData?.group_stage_rounds || [];
     const teamsWithTotals = teamsData.map(team => {
-        const total = groupRounds.reduce((sum, r) => sum + (team.pontuacoes.get(String(r)) || 0), 0);
+        const total = groupRounds.reduce((sum, r) => sum + (team.pontuacoes.get(`rodada_${r}`) || 0), 0);
         return { ...team, id: team._id.toString(), total };
     });
     
