@@ -16,8 +16,6 @@ import {
 } from "@mui/material";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
-
-// IMPORTAÇÃO DO NOVO CLIENTE API
 import api from "../services/api";
 
 const LoginPage = () => {
@@ -39,9 +37,8 @@ const LoginPage = () => {
     setLoading(true);
     setError("");
     try {
-      // A chamada agora é mais limpa, usando o 'api'
-      // e apenas o caminho da rota, sem o URL base.
-      const response = await api.post("/api/auth/login", {
+      // CORREÇÃO: O caminho não deve incluir /api/ aqui.
+      const response = await api.post("/auth/login", {
         username,
         password,
       });
