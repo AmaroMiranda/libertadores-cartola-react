@@ -17,8 +17,8 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const allowedOrigins = [
   'http://localhost:3000',
   'https://libertadores-cartola-frontend.onrender.com', // URL do Frontend na Render
-  'https://cartola-libertadors.onrender.com' // Outro URL do Frontend na Render
-  'https://libertadores-cartola-react.onrender.com'
+  'https://cartola-libertadors.onrender.com', // Outro URL do Frontend na Render
+  'https://libertadores-cartola-react.onrender.com' // URL CORRETA ADICIONADA
 ];
 
 app.use(cors({
@@ -584,15 +584,15 @@ async function processarMataMata() {
 app.get('/api/mata-mata', async (req, res) => {
     try {
        const { oitavasP, quartasP, semisP, finalP, vFinal, terceiroLugarP, vTerceiro } = await processarMataMata();
-res.json({
-    oitavas: oitavasP,
-    quartas: quartasP,
-    semis: semisP,
-    final: finalP,
-    terceiroLugar: terceiroLugarP, 
-    campeao: vFinal[0] || null,
-    terceiro: vTerceiro[0] || null, 
-});
+        res.json({
+            oitavas: oitavasP,
+            quartas: quartasP,
+            semis: semisP,
+            final: finalP,
+            terceiroLugar: terceiroLugarP, 
+            campeao: vFinal[0] || null,
+            terceiro: vTerceiro[0] || null, 
+        });
     } catch (error) {
         console.error("Erro em /api/mata-mata:", error);
         res.status(500).json({ message: 'Erro ao gerar chaveamento.' });
@@ -602,13 +602,13 @@ res.json({
 app.get('/api/mata-mata-confrontos', async (req, res) => {
     try {
       const { oitavasP, quartasP, semisP, finalP, terceiroLugarP } = await processarMataMata();
-const responseData = {};
-if (oitavasP.some(m => m.team1 && m.team2)) responseData['Oitavas de Final'] = oitavasP;
-if (quartasP.some(m => m.team1 && m.team2)) responseData['Quartas de Final'] = quartasP;
-if (semisP.some(m => m.team1 && m.team2)) responseData['Semifinais'] = semisP;
-if (terceiroLugarP.some(m => m.team1 && m.team2)) responseData['Disputa de 3º Lugar'] = terceiroLugarP; // Adicionado
-if (finalP.some(m => m.team1 && m.team2)) responseData['Final'] = finalP;
-res.json(responseData);
+        const responseData = {};
+        if (oitavasP.some(m => m.team1 && m.team2)) responseData['Oitavas de Final'] = oitavasP;
+        if (quartasP.some(m => m.team1 && m.team2)) responseData['Quartas de Final'] = quartasP;
+        if (semisP.some(m => m.team1 && m.team2)) responseData['Semifinais'] = semisP;
+        if (terceiroLugarP.some(m => m.team1 && m.team2)) responseData['Disputa de 3º Lugar'] = terceiroLugarP; // Adicionado
+        if (finalP.some(m => m.team1 && m.team2)) responseData['Final'] = finalP;
+        res.json(responseData);
     } catch (error) {
         console.error("Erro em /api/mata-mata-confrontos:", error);
         res.status(500).json({ message: 'Erro ao gerar confrontos de mata-mata.' });
