@@ -365,19 +365,79 @@ app.get('/api/fase-de-grupos', async (req, res) => {
         const teams = await Team.find().lean();
         const settings = await Settings.findOne({ singleton: true }).lean();
         const groupRounds = settings?.group_stage_rounds || [];
-        const resultados = teams.map(team => {
+
+        // 1. Calcula o total de pontos para cada time
+        const teamsWithTotals = teams.map(team => {
             const total = groupRounds.reduce((sum, rodada) => {
-                // CORREÇÃO: Acessar pontuações como propriedades de objeto
                 return sum + (team.pontuacoes[`rodada_${rodada}`] || 0);
             }, 0);
             return { ...team, id: team._id.toString(), total };
         });
-        res.json(resultados);
+
+        // 2. Agrupa os times por grupo
+        const grupos = teamsWithTotals.reduce((acc, time) => {
+            const grupo = (time.group && typeof time.group === 'string' && time.group.trim() !== "") ? time.group : "Sem Grupo";
+            (acc[grupo] = acc[grupo] || []).push(time);
+            return acc;
+        }, {});
+
+        // 3. Lógica para buscar os resultados dos confrontos diretos
+        const confrontosDiretos = {};
+        for (const groupName in grupos) {
+            if (grupos[groupName].length !== 4) continue;
+            const [t1, t2, t3, t4] = grupos[groupName];
+            const schedule = [
+                { home: t1, away: t4 }, { home: t2, away: t3 },
+                { home: t1, away: t3 }, { home: t4, away: t2 },
+                { home: t1, away: t2 }, { home: t3, away: t4 },
+            ];
+
+            schedule.forEach((match, index) => {
+                const cartolaRound = groupRounds[index];
+                if (!cartolaRound) return;
+
+                const key1 = `${match.home.id}-${match.away.id}`;
+                const key2 = `${match.away.id}-${match.home.id}`;
+
+                const scoreHome = match.home.pontuacoes[`rodada_${cartolaRound}`] || 0;
+                const scoreAway = match.away.pontuacoes[`rodada_${cartolaRound}`] || 0;
+
+                confrontosDiretos[key1] = (confrontosDiretos[key1] || 0) + (scoreHome - scoreAway);
+                confrontosDiretos[key2] = (confrontosDiretos[key2] || 0) + (scoreAway - scoreHome);
+            });
+        }
+
+        // 4. Ordena cada grupo usando os novos critérios de desempate
+        for (const nomeGrupo in grupos) {
+            grupos[nomeGrupo].sort((a, b) => {
+                // Critério 1: Pontuação Total
+                const totalDiff = b.total - a.total;
+                if (totalDiff !== 0) return totalDiff;
+
+                // Critério 2: Confronto Direto
+                const confrontoKey = `${a.id}-${b.id}`;
+                const saldoConfronto = confrontosDiretos[confrontoKey];
+                if (saldoConfronto !== undefined && saldoConfronto !== 0) {
+                    return saldoConfronto > 0 ? -1 : 1;
+                }
+
+                // Critério 3: Maior Pontuação em uma Única Rodada
+                const maxScoreA = Math.max(...groupRounds.map(r => a.pontuacoes[`rodada_${r}`] || 0));
+                const maxScoreB = Math.max(...groupRounds.map(r => b.pontuacoes[`rodada_${r}`] || 0));
+                const maxScoreDiff = maxScoreB - maxScoreA;
+                if (maxScoreDiff !== 0) return maxScoreDiff;
+
+                return 0; // Mantém a ordem se todos os critérios forem iguais
+            });
+        }
+
+        res.json(grupos);
     } catch (error) {
         console.error("Erro na rota /api/fase-de-grupos: ", error);
         res.status(500).json({ message: 'Erro ao processar fase de grupos.' });
     }
 });
+
 
 app.get('/api/confrontos', async (req, res) => {
     try {
