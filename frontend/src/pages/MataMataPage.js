@@ -1,6 +1,6 @@
 // src/pages/MataMataPage.js
 import React, { useState, useEffect, useCallback } from "react";
-import api from "../services/api"; // IMPORTAÇÃO DO NOVO CLIENTE
+import api from "../services/api";
 import {
   Typography,
   CircularProgress,
@@ -10,200 +10,89 @@ import {
   useTheme,
   useMediaQuery,
   Grid,
+  Divider,
 } from "@mui/material";
 import SwipeLeftIcon from "@mui/icons-material/SwipeLeft";
 import BracketMatch from "../components/BracketMatch";
 import ChampionColumn from "../components/ChampionColumn";
 
 const Connector = ({ row, col, span, isWinnerPath }) => (
-  <Box
-    sx={{
-      gridColumn: col,
-      gridRow: `${row} / span ${span}`,
-      display: "flex",
-      alignItems: "center",
-      transition: "all 0.3s ease-in-out",
-    }}
-  >
-    <Box
-      sx={{
-        width: "50%",
-        height: "2px",
-        bgcolor: isWinnerPath ? "primary.main" : "divider",
-      }}
-    />
-    <Box
-      sx={{
-        width: "50%",
-        height: "100%",
-        border: "2px solid",
-        borderColor: isWinnerPath ? "primary.main" : "divider",
-        borderLeft: "none",
-        borderRadius: "0 8px 8px 0",
-      }}
-    />
-  </Box>
+    <Box sx={{ gridColumn: col, gridRow: `${row} / span ${span}`, display: "flex", alignItems: "center", transition: "all 0.3s ease-in-out", }}>
+        <Box sx={{ width: "50%", height: "2px", bgcolor: isWinnerPath ? "primary.main" : "divider", }} />
+        <Box sx={{ width: "50%", height: "100%", border: "2px solid", borderColor: isWinnerPath ? "primary.main" : "divider", borderLeft: "none", borderRadius: "0 8px 8px 0", }} />
+    </Box>
 );
 
-const BracketView = ({ stages, campeao, terceiro, terceiroLugarMatch }) => {
-  const oitavasMatches = stages.find((s) => s.key === "oitavas")?.matches || [];
-  if (oitavasMatches.length === 0)
+const MainBracket = ({ stages, campeao }) => {
+    const initialMatches = stages.find(s => s.key === 'oitavas')?.matches.length || 0;
+    if (initialMatches === 0) return null;
+
+    const totalRows = initialMatches * 2;
+    const stageCount = stages.length;
+
     return (
-      <Alert severity="info">
-        Não há confrontos suficientes para gerar o chaveamento.
-      </Alert>
-    );
-
-  const totalRows = oitavasMatches.length * 2;
-  const finalStageIndex = stages.findIndex((s) => s.key === "final");
-
-  return (
-    <Paper elevation={3} sx={{ p: { xs: 1, sm: 2, md: 3 }, overflowX: "auto" }}>
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: `repeat(${
-            finalStageIndex + 1
-          }, minmax(300px, 1fr) 50px) minmax(280px, 1fr)`,
-          gridTemplateRows: `auto repeat(${totalRows}, 1fr)`,
-          gap: "10px 0",
-          alignItems: "center",
-          minWidth: "fit-content",
-        }}
-      >
-        {/* Títulos das Fases */}
-        {stages.map((stage, stageIndex) => (
-          <Typography
-            key={`title-${stage.key}`}
-            variant="h6"
-            sx={{
-              gridColumn: stageIndex * 2 + 1,
-              gridRow: 1,
-              textAlign: "center",
-              fontWeight: "bold",
-              color: "text.secondary",
-              alignSelf: "end",
-              pb: 2,
-            }}
-          >
-            {stage.title}
-          </Typography>
-        ))}
-
-        <Typography
-          variant="h6"
-          sx={{
-            gridColumn: (finalStageIndex + 1) * 2 + 1,
-            gridRow: 1,
-            textAlign: "center",
-            fontWeight: "bold",
-            color: "text.secondary",
-            alignSelf: "end",
-            pb: 2,
-          }}
-        >
-          Pódio
-        </Typography>
-
-        {/* Renderização dos Confrontos */}
-        {stages.flatMap((stage, stageIndex) => {
-          const rowMultiplier = 2 ** (stageIndex + 1);
-          const elements = [];
-          stage.matches.forEach((match, matchIndex) => {
-            const rowStart = matchIndex * rowMultiplier + rowMultiplier / 2 + 1;
-            let matchTitle = "";
-            switch (stage.key) {
-              case "final":
-                matchTitle = "A Grande Final";
-                break;
-              case "semis":
-                matchTitle = `Semifinal ${matchIndex + 1}`;
-                break;
-              case "quartas":
-                matchTitle = `Quartas ${matchIndex + 1}`;
-                break;
-              case "oitavas":
-                matchTitle = `Oitavas ${matchIndex + 1}`;
-                break;
-              default:
-                matchTitle = `Confronto ${matchIndex + 1}`;
-            }
-
-            elements.push(
-              <Box
-                key={`${stage.key}-${matchIndex}`}
+        <Paper elevation={3} sx={{ p: { xs: 1, sm: 2, md: 3 }, overflowX: "auto" }}>
+            <Box
                 sx={{
-                  gridColumn: stageIndex * 2 + 1,
-                  gridRow: `${rowStart} / span 2`,
-                  alignSelf: "center",
-                  justifySelf: "center",
+                    display: "grid",
+                    gridTemplateColumns: `repeat(${stageCount}, minmax(300px, 1fr) 50px) minmax(280px, 1fr)`,
+                    gridTemplateRows: `auto repeat(${totalRows}, 1fr)`,
+                    gap: "10px 0",
+                    alignItems: "center",
+                    minWidth: "fit-content",
                 }}
-              >
-                <BracketMatch match={match} title={matchTitle} />
-              </Box>
-            );
+            >
+                {/* Titles */}
+                {stages.map((stage, stageIndex) => (
+                    <Typography key={`title-${stage.key}`} variant="h6" sx={{ gridColumn: stageIndex * 2 + 1, gridRow: 1, textAlign: 'center', fontWeight: 'bold', color: 'text.secondary', alignSelf: 'end', pb: 2 }}>
+                        {stage.title}
+                    </Typography>
+                ))}
+                <Typography variant="h6" sx={{ gridColumn: stageCount * 2 + 1, gridRow: 1, textAlign: 'center', fontWeight: 'bold', color: 'text.secondary', alignSelf: 'end', pb: 2 }}>
+                    Campeão
+                </Typography>
 
-            if (stageIndex < finalStageIndex) {
-              const nextStage = stages[stageIndex + 1];
-              const nextMatchIndex = Math.floor(matchIndex / 2);
-              const nextMatch = nextStage?.matches[nextMatchIndex];
-              const isWinnerPath =
-                match.winnerTeam &&
-                (match.winnerTeam.id === nextMatch?.team1?.id ||
-                  match.winnerTeam.id === nextMatch?.team2?.id);
-              elements.push(
-                <Connector
-                  key={`conn-${stage.key}-${matchIndex}`}
-                  row={rowStart}
-                  col={stageIndex * 2 + 2}
-                  span={2}
-                  isWinnerPath={isWinnerPath}
-                />
-              );
-            }
-          });
-          return elements;
-        })}
+                {/* Matches and Connectors */}
+                {stages.flatMap((stage, stageIndex) => {
+                    const rowMultiplier = 2 ** (stageIndex + 1);
+                    const elements = [];
+                    stage.matches.forEach((match, matchIndex) => {
+                        const rowStart = matchIndex * rowMultiplier + rowMultiplier / 2 + 1;
+                        let matchTitle = "";
+                        switch (stage.key) {
+                            case "final": matchTitle = "A Grande Final"; break;
+                            case "semis": matchTitle = `Semifinal ${matchIndex + 1}`; break;
+                            case "quartas": matchTitle = `Quartas ${matchIndex + 1}`; break;
+                            case "oitavas": matchTitle = `Oitavas ${matchIndex + 1}`; break;
+                            default: matchTitle = `Confronto ${matchIndex + 1}`;
+                        }
+                        elements.push(
+                            <Box key={`${stage.key}-${matchIndex}`} sx={{ gridColumn: stageIndex * 2 + 1, gridRow: `${rowStart} / span 2`, alignSelf: 'center', justifySelf: 'center' }}>
+                                <BracketMatch match={match} title={matchTitle} />
+                            </Box>
+                        );
+                        if (stageIndex < stageCount - 1) {
+                            const nextStage = stages[stageIndex + 1];
+                            const nextMatchIndex = Math.floor(matchIndex / 2);
+                            const nextMatch = nextStage?.matches[nextMatchIndex];
+                            const isWinnerPath = match.winnerTeam && (match.winnerTeam.id === nextMatch?.team1?.id || match.winnerTeam.id === nextMatch?.team2?.id);
+                            elements.push(
+                                <Connector key={`conn-${stage.key}-${matchIndex}`} row={rowStart} col={stageIndex * 2 + 2} span={2} isWinnerPath={isWinnerPath} />
+                            );
+                        }
+                    });
+                    return elements;
+                })}
 
-        {/* Pódio */}
-        <Grid
-          container
-          direction="column"
-          justifyContent="space-around"
-          alignItems="center"
-          sx={{
-            gridColumn: (finalStageIndex + 1) * 2 + 1,
-            gridRow: `2 / span ${totalRows}`,
-          }}
-        >
-          <Grid item>
-            <ChampionColumn campeao={campeao} title="Campeão" />
-          </Grid>
-          <Grid item>
-            <ChampionColumn campeao={terceiro} title="3º Lugar" />
-          </Grid>
-        </Grid>
-
-        {/* Disputa de 3º Lugar */}
-        {terceiroLugarMatch && (
-          <Box
-            sx={{
-              gridColumn: finalStageIndex * 2 - 1,
-              gridRow: `${totalRows / 2 + 2} / span 4`,
-              alignSelf: "center",
-              justifySelf: "center",
-            }}
-          >
-            <BracketMatch
-              match={terceiroLugarMatch}
-              title="Disputa pelo 3º Lugar"
-            />
-          </Box>
-        )}
-      </Box>
-    </Paper>
-  );
+                {/* Champion Column */}
+                <Box sx={{ gridColumn: stageCount * 2 + 1, gridRow: `2 / span ${totalRows}`, display: 'flex', alignItems: 'center', justifySelf: 'center' }}>
+                    <ChampionColumn campeao={campeao} title="Campeão" />
+                </Box>
+            </Box>
+        </Paper>
+    );
 };
+
 
 function MataMataPage() {
   const [bracketData, setBracketData] = useState(null);
@@ -232,23 +121,15 @@ function MataMataPage() {
     fetchBracket();
   }, [fetchBracket]);
 
-  const layouts = bracketData
+  const mainStages = bracketData
     ? [
-        {
-          key: "oitavas",
-          title: "Oitavas de Final",
-          matches: bracketData.oitavas,
-        },
-        {
-          key: "quartas",
-          title: "Quartas de Final",
-          matches: bracketData.quartas,
-        },
+        { key: "oitavas", title: "Oitavas de Final", matches: bracketData.oitavas },
+        { key: "quartas", title: "Quartas de Final", matches: bracketData.quartas },
         { key: "semis", title: "Semifinais", matches: bracketData.semis },
         { key: "final", title: "Final", matches: bracketData.final },
-      ].filter((s) => s.matches && s.matches.length > 0)
+      ].filter((s) => s && s.matches && s.matches.length > 0)
     : [];
-
+    
   const terceiroLugarMatch = bracketData?.terceiroLugar?.[0];
 
   return (
@@ -286,12 +167,28 @@ function MataMataPage() {
       )}
 
       {!loading && bracketData && (
-        <BracketView
-          stages={layouts}
-          campeao={bracketData.campeao}
-          terceiro={bracketData.terceiro}
-          terceiroLugarMatch={terceiroLugarMatch}
-        />
+        <>
+            <MainBracket stages={mainStages} campeao={bracketData.campeao} />
+
+            {terceiroLugarMatch && (
+                <Paper elevation={3} sx={{ mt: 4, p: { xs: 2, sm: 3 } }}>
+                    <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'text.secondary', textAlign: 'center', mb: 2 }}>
+                        Disputa pelo 3º Lugar
+                    </Typography>
+                    <Grid container spacing={2} justifyContent="center" alignItems="center">
+                        <Grid item xs={12} md={6} lg={5}>
+                            <BracketMatch match={terceiroLugarMatch} title="Confronto" />
+                        </Grid>
+                        <Grid item xs={12} md={1} sx={{ display: 'flex', justifyContent: 'center' }}>
+                            <Divider orientation={isSmallScreen ? 'horizontal' : 'vertical'} flexItem />
+                        </Grid>
+                        <Grid item xs={12} md={5} lg={4}>
+                            <ChampionColumn campeao={bracketData.terceiro} title="3º Lugar" />
+                        </Grid>
+                    </Grid>
+                </Paper>
+            )}
+        </>
       )}
     </Box>
   );

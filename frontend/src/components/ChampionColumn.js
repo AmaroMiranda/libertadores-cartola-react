@@ -2,7 +2,9 @@ import React from "react";
 import { Typography, Box, Paper, Avatar } from "@mui/material";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 
-const ChampionColumn = ({ campeao }) => {
+const ChampionColumn = ({ campeao, title = "Campeão" }) => {
+  const isChampion = title === "Campeão";
+
   return (
     <Box
       sx={{
@@ -11,6 +13,7 @@ const ChampionColumn = ({ campeao }) => {
         alignItems: "center",
         justifyContent: "center",
         height: "100%",
+        minWidth: 250,
       }}
     >
       <Typography
@@ -22,7 +25,7 @@ const ChampionColumn = ({ campeao }) => {
           textTransform: "uppercase",
         }}
       >
-        Campeão
+        {title}
       </Typography>
       {campeao ? (
         <Paper
@@ -34,10 +37,16 @@ const ChampionColumn = ({ campeao }) => {
             alignItems: "center",
             gap: 1.5,
             width: "250px",
-            background: `linear-gradient(145deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+            background: isChampion
+              ? `linear-gradient(145deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`
+              : `linear-gradient(145deg, #6d4c41, #a1887f)`, // Tons de bronze para 3º lugar
             color: "white",
-            border: `2px solid ${theme.palette.primary.main}`,
-            boxShadow: `0 0 25px ${theme.palette.primary.main}`,
+            border: `2px solid ${
+              isChampion ? theme.palette.primary.main : "#8d6e63"
+            }`,
+            boxShadow: `0 0 25px ${
+              isChampion ? theme.palette.primary.main : "#a1887f"
+            }`,
             borderRadius: "12px",
           })}
         >
