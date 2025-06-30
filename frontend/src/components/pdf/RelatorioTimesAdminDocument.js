@@ -43,6 +43,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     borderBottomWidth: 0.5,
     borderBottomColor: "gray",
+    alignItems: "center",
   },
   tableHeader: { backgroundColor: "#2C2C44" },
   tableCell: {
