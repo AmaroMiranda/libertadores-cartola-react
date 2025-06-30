@@ -70,9 +70,10 @@ const styles = StyleSheet.create({
 });
 
 const RelatorioTimesAdminDocument = ({ teams, apiUrl }) => (
-  <Document title="Relatório de Times - Admin">
+  <Document title="Lista de times - Libertadores do Cartola">
     <Page size="A4" style={styles.page}>
       <View style={styles.header}>
+        <Text style={styles.headerText}>Libertadores do Cartola</Text>
         <Text style={styles.headerText}>Lista de Times da Competição</Text>
       </View>
       <View style={styles.table}>
