@@ -18,6 +18,7 @@ const allowedOrigins = [
   'http://localhost:3000',
   'https://libertadores-cartola-frontend.onrender.com', // URL do Frontend na Render
   'https://cartola-libertadors.onrender.com' // Outro URL do Frontend na Render
+  'https://libertadores-cartola-react.onrender.com'
 ];
 
 app.use(cors({
