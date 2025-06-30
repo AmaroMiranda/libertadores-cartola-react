@@ -65,6 +65,32 @@ const SettingsSchema = new mongoose.Schema({
 });
 const Settings = mongoose.model('Settings', SettingsSchema);
 
+app.get('/api/image-proxy', async (req, res) => {
+  const { url } = req.query;
+
+  if (!url) {
+    return res.status(400).send('URL da imagem é obrigatória');
+  }
+
+  try {
+    const response = await axios({
+      method: 'get',
+      url: decodeURIComponent(url),
+      responseType: 'stream',
+    });
+
+    // Define o tipo de conteúdo da resposta como o da imagem original
+    res.setHeader('Content-Type', response.headers['content-type']);
+    
+    // Envia a imagem como resposta
+    response.data.pipe(res);
+
+  } catch (error) {
+    console.error('Erro no proxy de imagem:', error.message);
+    res.status(500).send('Falha ao carregar a imagem');
+  }
+});
+
 // Rota de "saúde" para verificar se o servidor está no ar
 app.get("/api", (req, res) => {
     res.json({ message: "API da Libertadores do Cartola está no ar!" });
