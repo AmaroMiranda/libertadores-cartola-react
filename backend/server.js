@@ -16,8 +16,8 @@ const JWT_SECRET = process.env.JWT_SECRET;
 // --- Middlewares ---
 const allowedOrigins = [
   'http://localhost:3000',
-  'https://libertadores-cartola-frontend.onrender.com', // URL do Frontend na Render
-  'https://cartola-libertadors.onrender.com', // Outro URL do Frontend na Render
+  'https://libertadores-cartola-frontend.onrender.com',
+  'https://cartola-libertadors.onrender.com',
   'https://libertadores-cartola-react.onrender.com' // URL CORRETA ADICIONADA
 ];
 
@@ -315,6 +315,7 @@ app.post('/api/scores/refresh/knockout', verifyToken, async (req, res) => {
         await processStage('quartas', koSettings.quartas);
         await processStage('semis', koSettings.semis);
         await processStage('final', koSettings.final);
+        await processStage('terceiro_lugar', koSettings.terceiro_lugar);
 
         res.status(200).json({ message: "Busca de pontuações do mata-mata concluída com sucesso!" });
     } catch (error) {
@@ -368,7 +369,6 @@ app.get('/api/fase-de-grupos', async (req, res) => {
         const settings = await Settings.findOne({ singleton: true }).lean();
         const groupRounds = settings?.group_stage_rounds || [];
 
-        // 1. Calcula o total de pontos para cada time
         const teamsWithTotals = teams.map(team => {
             const total = groupRounds.reduce((sum, rodada) => {
                 return sum + (team.pontuacoes[`rodada_${rodada}`] || 0);
@@ -376,64 +376,63 @@ app.get('/api/fase-de-grupos', async (req, res) => {
             return { ...team, id: team._id.toString(), total };
         });
 
-        // 2. Agrupa os times por grupo
         const grupos = teamsWithTotals.reduce((acc, time) => {
             const grupo = (time.group && typeof time.group === 'string' && time.group.trim() !== "") ? time.group : "Sem Grupo";
             (acc[grupo] = acc[grupo] || []).push(time);
             return acc;
         }, {});
 
-        // 3. Lógica para buscar os resultados dos confrontos diretos
         const confrontosDiretos = {};
         for (const groupName in grupos) {
             if (grupos[groupName].length !== 4) continue;
+            
+            grupos[groupName].sort((a, b) => a.nome.localeCompare(b.nome));
             const [t1, t2, t3, t4] = grupos[groupName];
+            
             const schedule = [
-                { home: t1, away: t4 }, { home: t2, away: t3 },
-                { home: t1, away: t3 }, { home: t4, away: t2 },
-                { home: t1, away: t2 }, { home: t3, away: t4 },
+                { home: t1, away: t4, roundIndex: 0 }, { home: t2, away: t3, roundIndex: 0 },
+                { home: t1, away: t3, roundIndex: 1 }, { home: t4, away: t2, roundIndex: 1 },
+                { home: t1, away: t2, roundIndex: 2 }, { home: t3, away: t4, roundIndex: 2 },
+                { home: t4, away: t1, roundIndex: 3 }, { home: t3, away: t2, roundIndex: 3 },
+                { home: t3, away: t1, roundIndex: 4 }, { home: t2, away: t4, roundIndex: 4 },
+                { home: t2, away: t1, roundIndex: 5 }, { home: t4, away: t3, roundIndex: 5 },
             ];
 
-            schedule.forEach((match, index) => {
-                const cartolaRound = groupRounds[index];
+            schedule.forEach(match => {
+                const cartolaRound = groupRounds[match.roundIndex];
                 if (!cartolaRound) return;
 
                 const key1 = `${match.home.id}-${match.away.id}`;
-                const key2 = `${match.away.id}-${match.home.id}`;
-
                 const scoreHome = match.home.pontuacoes[`rodada_${cartolaRound}`] || 0;
                 const scoreAway = match.away.pontuacoes[`rodada_${cartolaRound}`] || 0;
-
                 confrontosDiretos[key1] = (confrontosDiretos[key1] || 0) + (scoreHome - scoreAway);
-                confrontosDiretos[key2] = (confrontosDiretos[key2] || 0) + (scoreAway - scoreHome);
             });
         }
 
-        // 4. Ordena cada grupo usando os novos critérios de desempate
         for (const nomeGrupo in grupos) {
             grupos[nomeGrupo].sort((a, b) => {
-                // Critério 1: Pontuação Total
                 const totalDiff = b.total - a.total;
                 if (totalDiff !== 0) return totalDiff;
 
-                // Critério 2: Confronto Direto
-                const confrontoKey = `${a.id}-${b.id}`;
-                const saldoConfronto = confrontosDiretos[confrontoKey];
-                if (saldoConfronto !== undefined && saldoConfronto !== 0) {
-                    return saldoConfronto > 0 ? -1 : 1;
-                }
+                const saldoA_vs_B = confrontosDiretos[`${a.id}-${b.id}`] || 0;
+                const saldoB_vs_A = confrontosDiretos[`${b.id}-${a.id}`] || 0;
+                const confrontoDiff = (saldoA_vs_B - saldoB_vs_A) * -1; // Invertido para desempate
+                if (confrontoDiff !== 0) return confrontoDiff;
 
-                // Critério 3: Maior Pontuação em uma Única Rodada
-                const maxScoreA = Math.max(...groupRounds.map(r => a.pontuacoes[`rodada_${r}`] || 0));
-                const maxScoreB = Math.max(...groupRounds.map(r => b.pontuacoes[`rodada_${r}`] || 0));
+                const maxScoreA = Math.max(0, ...groupRounds.map(r => a.pontuacoes[`rodada_${r}`] || 0));
+                const maxScoreB = Math.max(0, ...groupRounds.map(r => b.pontuacoes[`rodada_${r}`] || 0));
                 const maxScoreDiff = maxScoreB - maxScoreA;
                 if (maxScoreDiff !== 0) return maxScoreDiff;
 
-                return 0; // Mantém a ordem se todos os critérios forem iguais
+                return 0;
             });
         }
 
-        res.json(grupos);
+        // A API da fase de grupos agora retorna um objeto de grupos, e não um array
+        // O frontend em HomePage.js já espera este formato.
+        const responseArray = Object.keys(grupos).map(key => grupos[key]).flat();
+        res.json(responseArray);
+
     } catch (error) {
         console.error("Erro na rota /api/fase-de-grupos: ", error);
         res.status(500).json({ message: 'Erro ao processar fase de grupos.' });
@@ -454,11 +453,18 @@ app.get('/api/confrontos', async (req, res) => {
         const allMatches = [];
         for (const groupName in teamsByGroup) {
             if (teamsByGroup[groupName].length !== 4) continue;
+
+            // Ordena os times para garantir uma ordem consistente
+            teamsByGroup[groupName].sort((a, b) => a.nome.localeCompare(b.nome));
             const [t1, t2, t3, t4] = teamsByGroup[groupName];
+
             const schedule = [
-                { home: t1, away: t4 }, { home: t2, away: t3 }, { home: t1, away: t3 }, { home: t4, away: t2 },
-                { home: t1, away: t2 }, { home: t3, away: t4 }, { home: t4, away: t1 }, { home: t3, away: t2 },
-                { home: t3, away: t1 }, { home: t2, away: t4 }, { home: t2, away: t1 }, { home: t4, away: t3 },
+                { home: t1, away: t4 }, { home: t2, away: t3 }, // Rodada 1
+                { home: t1, away: t3 }, { home: t4, away: t2 }, // Rodada 2
+                { home: t1, away: t2 }, { home: t3, away: t4 }, // Rodada 3
+                { home: t4, away: t1 }, { home: t3, away: t2 }, // Rodada 4
+                { home: t3, away: t1 }, { home: t2, away: t4 }, // Rodada 5
+                { home: t2, away: t1 }, { home: t4, away: t3 }, // Rodada 6
             ];
 
             schedule.forEach((match, index) => {
@@ -500,6 +506,8 @@ async function processarMataMata() {
     }, {});
     
     for (const group in teamsByGroup) {
+        // A ordenação principal agora acontece na rota /fase-de-grupos
+        // Aqui, apenas garantimos que os classificados sejam pegos corretamente
         teamsByGroup[group].sort((a, b) => b.total - a.total);
     }
 
@@ -512,7 +520,7 @@ async function processarMataMata() {
     
     const processarFase = (confrontos, roundsData) => {
         const vencedores = [];
-        const perdedores = []; // Array para guardar os perdedores
+        const perdedores = [];
         for (const confronto of confrontos) {
             confronto.winnerTeam = null;
             if (!confronto.team1 || !confronto.team2) {
@@ -574,7 +582,6 @@ async function processarMataMata() {
     const final = [{ id: 'F1', team1: vSemis[0], team2: vSemis[1] }];
     const { confrontos: finalP, vencedores: vFinal } = processarFase(final, koRounds.final);
 
-    // Nova lógica para a disputa de 3º lugar
     const terceiroLugar = [{ id: 'T1', team1: pSemis[0], team2: pSemis[1] }];
     const { confrontos: terceiroLugarP, vencedores: vTerceiro } = processarFase(terceiroLugar, koRounds.terceiro_lugar);
     
@@ -606,7 +613,7 @@ app.get('/api/mata-mata-confrontos', async (req, res) => {
         if (oitavasP.some(m => m.team1 && m.team2)) responseData['Oitavas de Final'] = oitavasP;
         if (quartasP.some(m => m.team1 && m.team2)) responseData['Quartas de Final'] = quartasP;
         if (semisP.some(m => m.team1 && m.team2)) responseData['Semifinais'] = semisP;
-        if (terceiroLugarP.some(m => m.team1 && m.team2)) responseData['Disputa de 3º Lugar'] = terceiroLugarP; // Adicionado
+        if (terceiroLugarP.some(m => m.team1 && m.team2)) responseData['Disputa de 3º Lugar'] = terceiroLugarP;
         if (finalP.some(m => m.team1 && m.team2)) responseData['Final'] = finalP;
         res.json(responseData);
     } catch (error) {
