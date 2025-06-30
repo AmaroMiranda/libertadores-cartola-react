@@ -1,6 +1,5 @@
 // src/pages/MataMataPage.js
 import React, { useState, useEffect, useCallback } from "react";
-// import axios from "axios"; // JÁ NÃO É NECESSÁRIO
 import api from "../services/api"; // IMPORTAÇÃO DO NOVO CLIENTE
 import {
   Typography,
@@ -14,8 +13,6 @@ import {
 import SwipeLeftIcon from "@mui/icons-material/SwipeLeft";
 import BracketMatch from "../components/BracketMatch";
 import ChampionColumn from "../components/ChampionColumn";
-
-// const API_URL_MATA_MATA = ...; // JÁ NÃO É NECESSÁRIO
 
 const Connector = ({ row, col, span, isWinnerPath }) => (
   <Box
@@ -47,7 +44,7 @@ const Connector = ({ row, col, span, isWinnerPath }) => (
   </Box>
 );
 
-const BracketView = ({ stages, campeao }) => {
+const BracketView = ({ stages, campeao, terceiro, terceiroLugarMatch }) => {
   const initialMatches = stages[0]?.matches.length || 0;
   if (initialMatches === 0)
     return (
@@ -64,7 +61,7 @@ const BracketView = ({ stages, campeao }) => {
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: `repeat(${stageCount}, minmax(300px, 1fr) 50px) minmax(280px, 1fr)`,
+          gridTemplateColumns: `repeat(${stageCount}, minmax(300px, 1fr) 50px) minmax(280px, 1fr) 50px minmax(280px, 1fr)`,
           gridTemplateRows: `auto repeat(${totalRows}, 1fr)`,
           gap: "10px 0",
           alignItems: "center",
@@ -100,8 +97,9 @@ const BracketView = ({ stages, campeao }) => {
             pb: 2,
           }}
         >
-          Campeão
+          Pódio
         </Typography>
+
         {stages.flatMap((stage, stageIndex) => {
           const rowMultiplier = 2 ** (stageIndex + 1);
           const elements = [];
@@ -161,7 +159,7 @@ const BracketView = ({ stages, campeao }) => {
         <Box
           sx={{
             gridColumn: stageCount * 2 + 1,
-            gridRow: `2 / span ${totalRows}`,
+            gridRow: `2 / span ${Math.floor(totalRows / 2)}`,
             display: "flex",
             alignItems: "center",
             justifySelf: "center",
@@ -169,6 +167,50 @@ const BracketView = ({ stages, campeao }) => {
         >
           <ChampionColumn campeao={campeao} />
         </Box>
+        {terceiroLugarMatch && (
+          <>
+            <Typography
+              variant="h6"
+              sx={{
+                gridColumn: stageCount * 2 - 3,
+                gridRow: `${totalRows - 2} / span 1`,
+                textAlign: "center",
+                fontWeight: "bold",
+                color: "text.secondary",
+                alignSelf: "end",
+                pb: 2,
+              }}
+            >
+              Disputa de 3º Lugar
+            </Typography>
+            <Box
+              sx={{
+                gridColumn: stageCount * 2 - 3,
+                gridRow: `${totalRows - 1} / span 2`,
+                alignSelf: "center",
+                justifySelf: "center",
+              }}
+            >
+              <BracketMatch
+                match={terceiroLugarMatch}
+                title="Disputa de 3º Lugar"
+              />
+            </Box>
+            <Box
+              sx={{
+                gridColumn: stageCount * 2 + 1,
+                gridRow: `${Math.floor(totalRows / 2) + 2} / span ${Math.floor(
+                  totalRows / 2
+                )}`,
+                display: "flex",
+                alignItems: "center",
+                justifySelf: "center",
+              }}
+            >
+              <ChampionColumn campeao={terceiro} />
+            </Box>
+          </>
+        )}
       </Box>
     </Paper>
   );
@@ -186,7 +228,6 @@ function MataMataPage() {
     setLoading(true);
     setError("");
     try {
-      // A chamada agora usa o cliente API centralizado
       const response = await api.get("/mata-mata");
       setBracketData(response.data);
     } catch (err) {
@@ -218,6 +259,8 @@ function MataMataPage() {
         { key: "final", title: "Final", matches: bracketData.final },
       ].filter((s) => s.matches && s.matches.length > 0)
     : [];
+
+  const terceiroLugarMatch = bracketData?.terceiroLugar?.[0];
 
   return (
     <Box>
@@ -254,7 +297,12 @@ function MataMataPage() {
       )}
 
       {!loading && bracketData && (
-        <BracketView stages={layouts} campeao={bracketData.campeao} />
+        <BracketView
+          stages={layouts}
+          campeao={bracketData.campeao}
+          terceiro={bracketData.terceiro}
+          terceiroLugarMatch={terceiroLugarMatch}
+        />
       )}
     </Box>
   );

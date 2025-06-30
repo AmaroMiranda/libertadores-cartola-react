@@ -61,6 +61,7 @@ const SettingsSchema = new mongoose.Schema({
     quartas: [Number],
     semis: [Number],
     final: [Number],
+    terceiro_lugar: [Number],
   }
 });
 const Settings = mongoose.model('Settings', SettingsSchema);
@@ -510,10 +511,13 @@ async function processarMataMata() {
     
     const processarFase = (confrontos, roundsData) => {
         const vencedores = [];
+        const perdedores = []; // Array para guardar os perdedores
         for (const confronto of confrontos) {
             confronto.winnerTeam = null;
             if (!confronto.team1 || !confronto.team2) {
-                vencedores.push(null); continue;
+                vencedores.push(null); 
+                perdedores.push(null);
+                continue;
             }
             const rodadaIda = roundsData?.[0];
             const rodadaVolta = roundsData?.[1];
@@ -527,20 +531,32 @@ async function processarMataMata() {
             
             const allScoresPresent = [s1_ida, s2_ida, s1_volta, s2_volta].every(score => typeof score === 'number');
             if (!allScoresPresent) {
-                vencedores.push(null); continue;
+                vencedores.push(null);
+                perdedores.push(null);
+                continue;
             }
             
             const agg1 = s1_ida + s1_volta;
             const agg2 = s2_ida + s2_volta;
             confronto.aggregates = [agg1, agg2];
             
-            if (agg1 > agg2) confronto.winnerTeam = confronto.team1;
-            else if (agg2 > agg1) confronto.winnerTeam = confronto.team2;
-            else confronto.winnerTeam = (confronto.team1.total || 0) >= (confronto.team2.total || 0) ? confronto.team1 : confronto.team2;
-            
-            vencedores.push(confronto.winnerTeam);
+            if (agg1 > agg2) {
+                confronto.winnerTeam = confronto.team1;
+                vencedores.push(confronto.team1);
+                perdedores.push(confronto.team2);
+            } else if (agg2 > agg1) {
+                confronto.winnerTeam = confronto.team2;
+                vencedores.push(confronto.team2);
+                perdedores.push(confronto.team1);
+            } else {
+                const winner = (confronto.team1.total || 0) >= (confronto.team2.total || 0) ? confronto.team1 : confronto.team2;
+                const loser = winner.id === confronto.team1.id ? confronto.team2 : confronto.team1;
+                confronto.winnerTeam = winner;
+                vencedores.push(winner);
+                perdedores.push(loser);
+            }
         }
-        return { confrontos, vencedores };
+        return { confrontos, vencedores, perdedores };
     };
     
     const koRounds = settingsData?.knockout_rounds || {};
@@ -553,20 +569,29 @@ async function processarMataMata() {
     const semis = [
         { id: 'S1', team1: vQuartas[0], team2: vQuartas[1] }, { id: 'S2', team1: vQuartas[2], team2: vQuartas[3] },
     ];
-    const { confrontos: semisP, vencedores: vSemis } = processarFase(semis, koRounds.semis);
+    const { confrontos: semisP, vencedores: vSemis, perdedores: pSemis } = processarFase(semis, koRounds.semis);
     const final = [{ id: 'F1', team1: vSemis[0], team2: vSemis[1] }];
     const { confrontos: finalP, vencedores: vFinal } = processarFase(final, koRounds.final);
+
+    // Nova lógica para a disputa de 3º lugar
+    const terceiroLugar = [{ id: 'T1', team1: pSemis[0], team2: pSemis[1] }];
+    const { confrontos: terceiroLugarP, vencedores: vTerceiro } = processarFase(terceiroLugar, koRounds.terceiro_lugar);
     
-    return { oitavasP, quartasP, semisP, finalP, vFinal };
+    return { oitavasP, quartasP, semisP, finalP, vFinal, terceiroLugarP, vTerceiro };
 }
 
 app.get('/api/mata-mata', async (req, res) => {
     try {
-        const { oitavasP, quartasP, semisP, finalP, vFinal } = await processarMataMata();
-        res.json({
-            oitavas: oitavasP, quartas: quartasP, semis: semisP,
-            final: finalP, campeao: vFinal[0] || null,
-        });
+       const { oitavasP, quartasP, semisP, finalP, vFinal, terceiroLugarP, vTerceiro } = await processarMataMata();
+res.json({
+    oitavas: oitavasP,
+    quartas: quartasP,
+    semis: semisP,
+    final: finalP,
+    terceiroLugar: terceiroLugarP, 
+    campeao: vFinal[0] || null,
+    terceiro: vTerceiro[0] || null, 
+});
     } catch (error) {
         console.error("Erro em /api/mata-mata:", error);
         res.status(500).json({ message: 'Erro ao gerar chaveamento.' });
@@ -575,13 +600,14 @@ app.get('/api/mata-mata', async (req, res) => {
 
 app.get('/api/mata-mata-confrontos', async (req, res) => {
     try {
-        const { oitavasP, quartasP, semisP, finalP } = await processarMataMata();
-        const responseData = {};
-        if (oitavasP.some(m => m.team1 && m.team2)) responseData['Oitavas de Final'] = oitavasP;
-        if (quartasP.some(m => m.team1 && m.team2)) responseData['Quartas de Final'] = quartasP;
-        if (semisP.some(m => m.team1 && m.team2)) responseData['Semifinais'] = semisP;
-        if (finalP.some(m => m.team1 && m.team2)) responseData['Final'] = finalP;
-        res.json(responseData);
+      const { oitavasP, quartasP, semisP, finalP, terceiroLugarP } = await processarMataMata();
+const responseData = {};
+if (oitavasP.some(m => m.team1 && m.team2)) responseData['Oitavas de Final'] = oitavasP;
+if (quartasP.some(m => m.team1 && m.team2)) responseData['Quartas de Final'] = quartasP;
+if (semisP.some(m => m.team1 && m.team2)) responseData['Semifinais'] = semisP;
+if (terceiroLugarP.some(m => m.team1 && m.team2)) responseData['Disputa de 3º Lugar'] = terceiroLugarP; // Adicionado
+if (finalP.some(m => m.team1 && m.team2)) responseData['Final'] = finalP;
+res.json(responseData);
     } catch (error) {
         console.error("Erro em /api/mata-mata-confrontos:", error);
         res.status(500).json({ message: 'Erro ao gerar confrontos de mata-mata.' });

@@ -34,6 +34,7 @@ function MataMataConfrontosPage() {
     "Oitavas de Final",
     "Quartas de Final",
     "Semifinais",
+    "Disputa de 3º Lugar", // Adicionado
     "Final",
   ];
 

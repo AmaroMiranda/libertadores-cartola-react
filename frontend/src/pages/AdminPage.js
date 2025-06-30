@@ -74,7 +74,7 @@ const SettingsPanel = ({
             gutterBottom
             sx={{ textTransform: "capitalize" }}
           >
-            {stage}
+            {stage === "terceiro_lugar" ? "3º Lugar" : stage}
           </Typography>
           <TextField
             label="Ida"
@@ -457,6 +457,7 @@ function AdminPage() {
     oitavas: { ida: "", volta: "" },
     quartas: { ida: "", volta: "" },
     semis: { ida: "", volta: "" },
+    terceiro_lugar: { ida: "", volta: "" },
     final: { ida: "", volta: "" },
   });
   const [isLoadingSearch, setIsLoadingSearch] = useState(false);
@@ -510,6 +511,10 @@ function AdminPage() {
           ida: knockout_rounds.final?.[0] || "",
           volta: knockout_rounds.final?.[1] || "",
         },
+        terceiro_lugar: {
+          ida: knockout_rounds.terceiro_lugar?.[0] || "",
+          volta: knockout_rounds.terceiro_lugar?.[1] || "",
+        },
       });
     } catch (err) {
       showFeedback("error", "Falha ao carregar as configurações.");
@@ -544,6 +549,10 @@ function AdminPage() {
         final: [
           parseRound(knockoutRounds.final.ida),
           parseRound(knockoutRounds.final.volta),
+        ],
+        terceiro_lugar: [
+          parseRound(knockoutRounds.terceiro_lugar.ida),
+          parseRound(knockoutRounds.terceiro_lugar.volta),
         ],
       };
       await api.put("/settings", {
