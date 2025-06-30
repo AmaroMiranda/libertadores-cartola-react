@@ -35,8 +35,12 @@ import {
 import DeleteIcon from "@mui/icons-material/Delete";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
+import { pdf } from "@react-pdf/renderer";
+import { saveAs } from "file-saver";
+import RelatorioTimesAdminDocument from "../components/pdf/RelatorioTimesAdminDocument";
+import ShareIcon from "@mui/icons-material/Share";
 
-// Componente para o Painel de Configurações (sem alterações de lógica)
+// Componente para o Painel de Configurações
 const SettingsPanel = ({
   rounds,
   knockoutRounds,
@@ -106,7 +110,7 @@ const SettingsPanel = ({
   </Paper>
 );
 
-// Componente para o Painel de Busca de Pontuações (sem alterações de lógica)
+// Componente para o Painel de Busca de Pontuações
 const ScoresPanel = ({
   onFetchGroup,
   onFetchKnockout,
@@ -162,7 +166,7 @@ const ScoresPanel = ({
   </Paper>
 );
 
-// Componente para o Painel de Gestão de Times (sem alterações de lógica)
+// Componente para o Painel de Gestão de Times
 const TeamsPanel = ({
   teams,
   teamFilter,
@@ -176,8 +180,10 @@ const TeamsPanel = ({
   searchTerm,
   searchResults,
   isLoadingSearch,
+  showFeedback,
 }) => {
   const [teamToDelete, setTeamToDelete] = useState(null);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
@@ -187,6 +193,28 @@ const TeamsPanel = ({
     setTeamToDelete(null);
   };
   const handleDeleteCancel = () => setTeamToDelete(null);
+
+  const handleGeneratePdf = async () => {
+    if (!teams || teams.length === 0) return;
+    setIsGeneratingPdf(true);
+    showFeedback("info", "Gerando PDF da lista de times...");
+
+    try {
+      const API_BASE_URL = api.defaults.baseURL.replace("/api", "");
+
+      const doc = (
+        <RelatorioTimesAdminDocument teams={teams} apiUrl={API_BASE_URL} />
+      );
+      const blob = await pdf(doc).toBlob();
+      saveAs(blob, "relatorio-times-admin.pdf");
+      showFeedback("success", "PDF gerado com sucesso!");
+    } catch (e) {
+      console.error("Erro ao gerar PDF da lista de times:", e);
+      showFeedback("error", "Ocorreu um erro ao gerar o PDF.");
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
 
   return (
     <Box>
@@ -203,16 +231,30 @@ const TeamsPanel = ({
         <Typography variant="h5" component="h2">
           3. Gerir Times ({teams.length})
         </Typography>
-        <Button
-          variant="outlined"
-          onClick={onRefresh}
-          disabled={isRefreshing || teams.length === 0}
-          startIcon={
-            isRefreshing ? <CircularProgress size={20} /> : <RefreshIcon />
-          }
-        >
-          {isRefreshing ? "Atualizando..." : "Atualizar Dados"}
-        </Button>
+        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+          <Button
+            variant="outlined"
+            onClick={onRefresh}
+            disabled={isRefreshing || teams.length === 0}
+            startIcon={
+              isRefreshing ? <CircularProgress size={20} /> : <RefreshIcon />
+            }
+          >
+            {isRefreshing ? "Atualizando..." : "Atualizar Dados"}
+          </Button>
+
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={handleGeneratePdf}
+            disabled={isGeneratingPdf || teams.length === 0}
+            startIcon={
+              isGeneratingPdf ? <CircularProgress size={20} /> : <ShareIcon />
+            }
+          >
+            {isGeneratingPdf ? "Gerando..." : "Exportar PDF"}
+          </Button>
+        </Box>
       </Box>
 
       <Paper elevation={2} sx={{ p: 2, mb: 1, position: "relative" }}>
@@ -287,6 +329,19 @@ const TeamsPanel = ({
                     gap: 2,
                   }}
                 >
+                  <Typography
+                    variant="h6"
+                    component="span"
+                    sx={{
+                      fontWeight: "bold",
+                      color: "text.secondary",
+                      width: "30px",
+                      textAlign: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {index + 1}.
+                  </Typography>
                   <ListItemAvatar>
                     <Avatar src={team.url_escudo} />
                   </ListItemAvatar>
@@ -641,7 +696,7 @@ function AdminPage() {
       }
     }, 500);
     return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, showFeedback]);
+  }, [searchTerm]);
 
   return (
     <Container maxWidth="lg">
@@ -694,6 +749,7 @@ function AdminPage() {
         onAdd={handleAddTeam}
         onDelete={handleDeleteTeam}
         onGroupChange={handleGroupChange}
+        showFeedback={showFeedback}
       />
     </Container>
   );

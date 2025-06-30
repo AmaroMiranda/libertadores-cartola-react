@@ -1,20 +1,22 @@
 // src/context/AuthContext.js
 import React, { createContext, useState, useContext, useEffect } from "react";
-import axios from "axios";
+import api from "../services/api"; // Importando o 'api' para consistência
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [token, setToken] = useState(localStorage.getItem("authToken"));
+  // Troque localStorage por sessionStorage
+  const [token, setToken] = useState(sessionStorage.getItem("authToken"));
 
-  // Configura o header de autorização do Axios sempre que o token mudar
   useEffect(() => {
     if (token) {
-      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-      localStorage.setItem("authToken", token);
+      // A configuração do axios já é feita no interceptor do 'api.js',
+      // mas manter aqui garante consistência se o AuthContext for usado em outro lugar.
+      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      sessionStorage.setItem("authToken", token); // Salve em sessionStorage
     } else {
-      delete axios.defaults.headers.common["Authorization"];
-      localStorage.removeItem("authToken");
+      delete api.defaults.headers.common["Authorization"];
+      sessionStorage.removeItem("authToken"); // Remova de sessionStorage
     }
   }, [token]);
 
