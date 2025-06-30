@@ -45,7 +45,8 @@ const Connector = ({ row, col, span, isWinnerPath }) => (
 );
 
 const BracketView = ({ stages, campeao, terceiro, terceiroLugarMatch }) => {
-  const initialMatches = stages[0]?.matches.length || 0;
+  const initialMatches =
+    stages.find((s) => s.key === "oitavas")?.matches.length || 0;
   if (initialMatches === 0)
     return (
       <Alert severity="info">
@@ -55,19 +56,21 @@ const BracketView = ({ stages, campeao, terceiro, terceiroLugarMatch }) => {
 
   const totalRows = initialMatches * 2;
   const stageCount = stages.length;
+  const finalStageIndex = stages.findIndex((s) => s.key === "final");
 
   return (
     <Paper elevation={3} sx={{ p: { xs: 1, sm: 2, md: 3 }, overflowX: "auto" }}>
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: `repeat(${stageCount}, minmax(300px, 1fr) 50px) minmax(280px, 1fr) 50px minmax(280px, 1fr)`,
+          gridTemplateColumns: `repeat(${stageCount}, minmax(300px, 1fr) 50px) minmax(280px, 1fr)`,
           gridTemplateRows: `auto repeat(${totalRows}, 1fr)`,
           gap: "10px 0",
           alignItems: "center",
           minWidth: "fit-content",
         }}
       >
+        {/* Títulos das Fases */}
         {stages.map((stage, stageIndex) => (
           <Typography
             key={`title-${stage.key}`}
@@ -85,6 +88,8 @@ const BracketView = ({ stages, campeao, terceiro, terceiroLugarMatch }) => {
             {stage.title}
           </Typography>
         ))}
+
+        {/* Título do Pódio */}
         <Typography
           variant="h6"
           sx={{
@@ -100,6 +105,7 @@ const BracketView = ({ stages, campeao, terceiro, terceiroLugarMatch }) => {
           Pódio
         </Typography>
 
+        {/* Renderização dos Confrontos */}
         {stages.flatMap((stage, stageIndex) => {
           const rowMultiplier = 2 ** (stageIndex + 1);
           const elements = [];
@@ -122,6 +128,7 @@ const BracketView = ({ stages, campeao, terceiro, terceiroLugarMatch }) => {
               default:
                 matchTitle = `Confronto ${matchIndex + 1}`;
             }
+
             elements.push(
               <Box
                 key={`${stage.key}-${matchIndex}`}
@@ -135,7 +142,8 @@ const BracketView = ({ stages, campeao, terceiro, terceiroLugarMatch }) => {
                 <BracketMatch match={match} title={matchTitle} />
               </Box>
             );
-            if (stageIndex < stageCount - 1) {
+
+            if (stageIndex < finalStageIndex) {
               const nextStage = stages[stageIndex + 1];
               const nextMatchIndex = Math.floor(matchIndex / 2);
               const nextMatch = nextStage?.matches[nextMatchIndex];
@@ -156,6 +164,8 @@ const BracketView = ({ stages, campeao, terceiro, terceiroLugarMatch }) => {
           });
           return elements;
         })}
+
+        {/* Campeão */}
         <Box
           sx={{
             gridColumn: stageCount * 2 + 1,
@@ -167,49 +177,38 @@ const BracketView = ({ stages, campeao, terceiro, terceiroLugarMatch }) => {
         >
           <ChampionColumn campeao={campeao} />
         </Box>
+
+        {/* Terceiro Lugar */}
         {terceiroLugarMatch && (
-          <>
-            <Typography
-              variant="h6"
-              sx={{
-                gridColumn: stageCount * 2 - 3,
-                gridRow: `${totalRows - 2} / span 1`,
-                textAlign: "center",
-                fontWeight: "bold",
-                color: "text.secondary",
-                alignSelf: "end",
-                pb: 2,
-              }}
-            >
-              Disputa de 3º Lugar
-            </Typography>
-            <Box
-              sx={{
-                gridColumn: stageCount * 2 - 3,
-                gridRow: `${totalRows - 1} / span 2`,
-                alignSelf: "center",
-                justifySelf: "center",
-              }}
-            >
-              <BracketMatch
-                match={terceiroLugarMatch}
-                title="Disputa de 3º Lugar"
-              />
-            </Box>
-            <Box
-              sx={{
-                gridColumn: stageCount * 2 + 1,
-                gridRow: `${Math.floor(totalRows / 2) + 2} / span ${Math.floor(
-                  totalRows / 2
-                )}`,
-                display: "flex",
-                alignItems: "center",
-                justifySelf: "center",
-              }}
-            >
-              <ChampionColumn campeao={terceiro} />
-            </Box>
-          </>
+          <Box
+            sx={{
+              gridColumn: finalStageIndex * 2 - 1,
+              gridRow: `${totalRows - 2} / span 3`,
+              alignSelf: "center",
+              justifySelf: "center",
+            }}
+          >
+            <BracketMatch
+              match={terceiroLugarMatch}
+              title="Disputa pelo 3º Lugar"
+            />
+          </Box>
+        )}
+
+        {terceiro && (
+          <Box
+            sx={{
+              gridColumn: stageCount * 2 + 1,
+              gridRow: `${Math.floor(totalRows / 2) + 2} / span ${Math.floor(
+                totalRows / 2
+              )}`,
+              display: "flex",
+              alignItems: "center",
+              justifySelf: "center",
+            }}
+          >
+            <ChampionColumn campeao={terceiro} title="3º Lugar" />
+          </Box>
         )}
       </Box>
     </Paper>
