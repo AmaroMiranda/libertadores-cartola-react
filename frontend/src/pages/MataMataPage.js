@@ -9,6 +9,7 @@ import {
   Paper,
   useTheme,
   useMediaQuery,
+  Grid,
 } from "@mui/material";
 import SwipeLeftIcon from "@mui/icons-material/SwipeLeft";
 import BracketMatch from "../components/BracketMatch";
@@ -45,17 +46,15 @@ const Connector = ({ row, col, span, isWinnerPath }) => (
 );
 
 const BracketView = ({ stages, campeao, terceiro, terceiroLugarMatch }) => {
-  const initialMatches =
-    stages.find((s) => s.key === "oitavas")?.matches.length || 0;
-  if (initialMatches === 0)
+  const oitavasMatches = stages.find((s) => s.key === "oitavas")?.matches || [];
+  if (oitavasMatches.length === 0)
     return (
       <Alert severity="info">
         Não há confrontos suficientes para gerar o chaveamento.
       </Alert>
     );
 
-  const totalRows = initialMatches * 2;
-  const stageCount = stages.length;
+  const totalRows = oitavasMatches.length * 2;
   const finalStageIndex = stages.findIndex((s) => s.key === "final");
 
   return (
@@ -63,7 +62,9 @@ const BracketView = ({ stages, campeao, terceiro, terceiroLugarMatch }) => {
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: `repeat(${stageCount}, minmax(300px, 1fr) 50px) minmax(280px, 1fr)`,
+          gridTemplateColumns: `repeat(${
+            finalStageIndex + 1
+          }, minmax(300px, 1fr) 50px) minmax(280px, 1fr)`,
           gridTemplateRows: `auto repeat(${totalRows}, 1fr)`,
           gap: "10px 0",
           alignItems: "center",
@@ -89,11 +90,10 @@ const BracketView = ({ stages, campeao, terceiro, terceiroLugarMatch }) => {
           </Typography>
         ))}
 
-        {/* Título do Pódio */}
         <Typography
           variant="h6"
           sx={{
-            gridColumn: stageCount * 2 + 1,
+            gridColumn: (finalStageIndex + 1) * 2 + 1,
             gridRow: 1,
             textAlign: "center",
             fontWeight: "bold",
@@ -165,25 +165,31 @@ const BracketView = ({ stages, campeao, terceiro, terceiroLugarMatch }) => {
           return elements;
         })}
 
-        {/* Campeão */}
-        <Box
+        {/* Pódio */}
+        <Grid
+          container
+          direction="column"
+          justifyContent="space-around"
+          alignItems="center"
           sx={{
-            gridColumn: stageCount * 2 + 1,
-            gridRow: `2 / span ${Math.floor(totalRows / 2)}`,
-            display: "flex",
-            alignItems: "center",
-            justifySelf: "center",
+            gridColumn: (finalStageIndex + 1) * 2 + 1,
+            gridRow: `2 / span ${totalRows}`,
           }}
         >
-          <ChampionColumn campeao={campeao} />
-        </Box>
+          <Grid item>
+            <ChampionColumn campeao={campeao} title="Campeão" />
+          </Grid>
+          <Grid item>
+            <ChampionColumn campeao={terceiro} title="3º Lugar" />
+          </Grid>
+        </Grid>
 
-        {/* Terceiro Lugar */}
+        {/* Disputa de 3º Lugar */}
         {terceiroLugarMatch && (
           <Box
             sx={{
               gridColumn: finalStageIndex * 2 - 1,
-              gridRow: `${totalRows - 2} / span 3`,
+              gridRow: `${totalRows / 2 + 2} / span 4`,
               alignSelf: "center",
               justifySelf: "center",
             }}
@@ -192,22 +198,6 @@ const BracketView = ({ stages, campeao, terceiro, terceiroLugarMatch }) => {
               match={terceiroLugarMatch}
               title="Disputa pelo 3º Lugar"
             />
-          </Box>
-        )}
-
-        {terceiro && (
-          <Box
-            sx={{
-              gridColumn: stageCount * 2 + 1,
-              gridRow: `${Math.floor(totalRows / 2) + 2} / span ${Math.floor(
-                totalRows / 2
-              )}`,
-              display: "flex",
-              alignItems: "center",
-              justifySelf: "center",
-            }}
-          >
-            <ChampionColumn campeao={terceiro} title="3º Lugar" />
           </Box>
         )}
       </Box>
