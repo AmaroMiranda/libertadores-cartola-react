@@ -17,12 +17,19 @@ import {
   DialogTitle,
   Slide,
   Divider,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
+  IconButton,
 } from "@mui/material";
 import CasinoIcon from "@mui/icons-material/Casino";
 import SaveIcon from "@mui/icons-material/Save";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import CloseIcon from "@mui/icons-material/Close";
 
-// Efeito de transição para o Dialog (popup)
+// Efeito de transição para os Dialogs
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
 });
@@ -88,7 +95,8 @@ function SorteioPage() {
   const [teamsToDraw, setTeamsToDraw] = useState([]);
   const [groups, setGroups] = useState({});
   const [lastDrawnTeam, setLastDrawnTeam] = useState(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [drawDialogOpen, setDrawDialogOpen] = useState(false);
+  const [potDialogOpen, setPotDialogOpen] = useState(false); // Novo estado para o dialog do pote
   const [isDrawing, setIsDrawing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -107,7 +115,7 @@ function SorteioPage() {
       {}
     );
     setGroups(initialGroups);
-    setTeamsToDraw([...teams].sort(() => Math.random() - 0.5)); // Embaralha os times no pote
+    setTeamsToDraw([...teams].sort(() => Math.random() - 0.5));
     setLastDrawnTeam(null);
   }, []);
 
@@ -146,16 +154,15 @@ function SorteioPage() {
     setIsDrawing(true);
 
     const remainingTeams = [...teamsToDraw];
-    const drawnTeam = remainingTeams.shift(); // Pega o primeiro time da lista embaralhada
+    const drawnTeam = remainingTeams.shift();
 
     setLastDrawnTeam(drawnTeam);
 
-    // Animação: abre o dialog e fecha após um tempo
-    setTimeout(() => setDialogOpen(true), 100);
+    setTimeout(() => setDrawDialogOpen(true), 100);
     setTimeout(() => {
-      setDialogOpen(false);
+      setDrawDialogOpen(false);
       placeTeamInGroup(drawnTeam);
-      setTeamsToDraw(remainingTeams); // Atualiza o pote após a animação
+      setTeamsToDraw(remainingTeams);
     }, 2500);
   };
 
@@ -175,7 +182,6 @@ function SorteioPage() {
     }));
 
     if (teamsToDraw.length === 1) {
-      // A verificação agora é 1 pois a atualização do estado é assíncrona
       setFeedback({
         open: true,
         message: "Sorteio concluído!",
@@ -236,7 +242,6 @@ function SorteioPage() {
       </Typography>
 
       <Grid container spacing={3}>
-        {/* Coluna do Pote e Ações */}
         <Grid item xs={12} md={4}>
           <Paper elevation={3} sx={{ p: 2, position: "sticky", top: "20px" }}>
             <Typography variant="h5" sx={{ fontWeight: "bold" }}>
@@ -271,6 +276,15 @@ function SorteioPage() {
               <Button
                 fullWidth
                 variant="outlined"
+                color="info"
+                onClick={() => setPotDialogOpen(true)}
+                startIcon={<VisibilityIcon />}
+              >
+                Visualizar Pote
+              </Button>
+              <Button
+                fullWidth
+                variant="outlined"
                 color="warning"
                 onClick={() => initializeDraw(allTeams)}
                 disabled={isDrawing}
@@ -284,24 +298,9 @@ function SorteioPage() {
                 Sorteio finalizado! Clique em "Salvar Grupos" para confirmar.
               </Alert>
             )}
-            <Box
-              sx={{
-                mt: 2,
-                maxHeight: "45vh",
-                overflowY: "auto",
-                p: 1,
-                backgroundColor: "rgba(0,0,0,0.1)",
-                borderRadius: 1,
-              }}
-            >
-              {teamsToDraw.map((team) => (
-                <Chip key={team.id} label={team.nome} sx={{ m: 0.5 }} />
-              ))}
-            </Box>
           </Paper>
         </Grid>
 
-        {/* Coluna dos Grupos */}
         <Grid item xs={12} md={8}>
           <Grid container spacing={2}>
             {GROUP_NAMES.map((name) => (
@@ -337,9 +336,9 @@ function SorteioPage() {
         </Grid>
       </Grid>
 
-      {/* Dialog da Animação */}
+      {/* Dialog da Animação de Sorteio */}
       <Dialog
-        open={dialogOpen}
+        open={drawDialogOpen}
         TransitionComponent={Transition}
         keepMounted
         PaperProps={{
@@ -358,6 +357,39 @@ function SorteioPage() {
         </DialogTitle>
         <DialogContent>
           {lastDrawnTeam && <DrawnTeamCard team={lastDrawnTeam} />}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog para Visualizar o Pote */}
+      <Dialog
+        open={potDialogOpen}
+        onClose={() => setPotDialogOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>
+          Times no Pote ({teamsToDraw.length})
+          <IconButton
+            onClick={() => setPotDialogOpen(false)}
+            sx={{ position: "absolute", right: 8, top: 8 }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          <List>
+            {teamsToDraw.map((team) => (
+              <ListItem key={team.id}>
+                <ListItemAvatar>
+                  <Avatar src={team.url_escudo} />
+                </ListItemAvatar>
+                <ListItemText
+                  primary={team.nome}
+                  secondary={team.nome_cartola}
+                />
+              </ListItem>
+            ))}
+          </List>
         </DialogContent>
       </Dialog>
 
