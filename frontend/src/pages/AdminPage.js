@@ -37,6 +37,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
 import CasinoIcon from "@mui/icons-material/Casino";
+import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import { pdf } from "@react-pdf/renderer";
 import { saveAs } from "file-saver";
 import RelatorioTimesAdminDocument from "../components/pdf/RelatorioTimesAdminDocument";
@@ -467,14 +468,13 @@ function AdminPage() {
   const [isFetchingGroupScores, setIsFetchingGroupScores] = useState(false);
   const [isFetchingKnockoutScores, setIsFetchingKnockoutScores] =
     useState(false);
-
   const [teamFilter, setTeamFilter] = useState("");
-
   const [feedback, setFeedback] = useState({
     open: false,
     type: "info",
     message: "",
   });
+  const [resetGroupsDialogOpen, setResetGroupsDialogOpen] = useState(false);
 
   const showFeedback = (type, message) =>
     setFeedback({ open: true, type, message });
@@ -663,6 +663,21 @@ function AdminPage() {
     }
   };
 
+  const handleResetGroups = async () => {
+    setResetGroupsDialogOpen(false);
+    showFeedback("info", "Resetando todos os grupos...");
+    try {
+      const response = await api.post("/teams/reset-groups");
+      showFeedback("success", response.data.message);
+      fetchMyTeams();
+    } catch (err) {
+      showFeedback(
+        "error",
+        err.response?.data?.message || "Ocorreu um erro ao resetar os grupos."
+      );
+    }
+  };
+
   const handleKnockoutRoundChange = (e, stage, leg) => {
     const { value } = e.target;
     setKnockoutRounds((prev) => ({
@@ -732,17 +747,27 @@ function AdminPage() {
 
       <Paper elevation={2} sx={{ p: { xs: 2, sm: 3 }, mb: 4 }}>
         <Typography variant="h6" gutterBottom>
-          Sorteio da Fase de Grupos
+          Gestão dos Grupos
         </Typography>
-        <Button
-          component={RouterLink}
-          to="/admin/sorteio"
-          variant="contained"
-          color="primary"
-          startIcon={<CasinoIcon />}
-        >
-          Ir para a Página de Sorteio
-        </Button>
+        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+          <Button
+            component={RouterLink}
+            to="/admin/sorteio"
+            variant="contained"
+            color="primary"
+            startIcon={<CasinoIcon />}
+          >
+            Ir para a Página de Sorteio
+          </Button>
+          <Button
+            variant="outlined"
+            color="error"
+            onClick={() => setResetGroupsDialogOpen(true)}
+            startIcon={<RestartAltIcon />}
+          >
+            Resetar Todos os Grupos
+          </Button>
+        </Box>
       </Paper>
 
       <SettingsPanel
@@ -777,6 +802,28 @@ function AdminPage() {
         onGroupChange={handleGroupChange}
         showFeedback={showFeedback}
       />
+
+      <Dialog
+        open={resetGroupsDialogOpen}
+        onClose={() => setResetGroupsDialogOpen(false)}
+      >
+        <DialogTitle>Confirmar Ação</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Tem certeza que deseja resetar todos os grupos? Esta ação removerá
+            todos os times de seus grupos atuais e não pode ser desfeita. Você
+            precisará realizar um novo sorteio.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setResetGroupsDialogOpen(false)}>
+            Cancelar
+          </Button>
+          <Button onClick={handleResetGroups} color="error" autoFocus>
+            Sim, Resetar Grupos
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 }
