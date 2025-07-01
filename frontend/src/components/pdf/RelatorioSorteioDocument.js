@@ -27,7 +27,7 @@ const styles = StyleSheet.create({
     padding: 20,
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "space-between",
+    justifyContent: "space-around", // Distribui o espaço
     alignContent: "flex-start",
   },
   header: {
@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
   },
   headerText: { color: "#00E5FF", fontSize: 24, fontWeight: "bold" },
   groupContainer: {
-    width: "48%", // Usar 48% para dar um pequeno espaço entre as colunas
+    width: "48%", // Em paisagem, 48% funciona bem para 2 colunas
     backgroundColor: "#2C2C44",
     borderRadius: 5,
     padding: 12,
@@ -82,7 +82,8 @@ const styles = StyleSheet.create({
 // --- COMPONENTE DO DOCUMENTO ---
 const RelatorioSorteioDocument = ({ groups, apiUrl }) => (
   <Document title="Resultado do Sorteio dos Grupos">
-    <Page size="A4" style={styles.page}>
+    {/* AQUI ESTÁ A MUDANÇA: orientation="landscape" */}
+    <Page size="A4" orientation="landscape" style={styles.page}>
       <View style={styles.header}>
         <Text style={styles.headerText}>Resultado do Sorteio</Text>
       </View>

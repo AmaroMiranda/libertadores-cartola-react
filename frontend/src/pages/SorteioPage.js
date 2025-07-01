@@ -27,10 +27,10 @@ import SaveIcon from "@mui/icons-material/Save";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import CloseIcon from "@mui/icons-material/Close";
-import DownloadIcon from "@mui/icons-material/Download"; // Importação do Ícone
+import DownloadIcon from "@mui/icons-material/Download";
 import { pdf } from "@react-pdf/renderer";
 import { savePdf } from "../utils/download";
-import RelatorioSorteioDocument from "../components/pdf/RelatorioSorteioDocument"; // Importação do novo componente
+import RelatorioSorteioDocument from "../components/pdf/RelatorioSorteioDocument";
 
 // Efeito de transição para os Dialogs
 const Transition = React.forwardRef(function Transition(props, ref) {
@@ -103,7 +103,7 @@ function SorteioPage() {
   const [isDrawing, setIsDrawing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false); // Estado para o PDF
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [feedback, setFeedback] = useState({
     open: false,
     message: "",
@@ -160,34 +160,43 @@ function SorteioPage() {
 
     setLastDrawnTeam(drawnTeam);
 
-    setTimeout(() => setDrawDialogOpen(true), 100);
+    setTimeout(() => {
+      placeTeamInGroup(drawnTeam);
+      setDrawDialogOpen(true);
+    }, 100);
+
     setTimeout(() => {
       setDrawDialogOpen(false);
-      placeTeamInGroup(drawnTeam);
       setTeamsToDraw(remainingTeams);
-    }, 1000); // Duração do dialog alterada para 2 segundos
+      setIsDrawing(false);
+    }, 2000);
   };
 
   const placeTeamInGroup = (drawnTeam) => {
-    if (!drawnTeam) {
-      setIsDrawing(false);
-      return;
-    }
+    if (!drawnTeam) return;
 
-    const drawnCount = allTeams.length - teamsToDraw.length;
-    const groupIndex = Math.floor(drawnCount / TEAMS_PER_GROUP);
-    const targetGroup = GROUP_NAMES[groupIndex];
+    setGroups((currentGroups) => {
+      // AQUI ESTÁ A CORREÇÃO PRINCIPAL:
+      // Contamos os times já alocados para saber qual é o próximo.
+      const drawnCount = Object.values(currentGroups).flat().length;
+      const groupIndex = Math.floor(drawnCount / TEAMS_PER_GROUP);
+      const targetGroup = GROUP_NAMES[groupIndex];
 
-    setGroups((currentGroups) => ({
-      ...currentGroups,
-      [targetGroup]: [...currentGroups[targetGroup], drawnTeam],
-    }));
+      // Se o grupo de destino não existir ou estiver cheio (salvaguarda)
+      if (!targetGroup || currentGroups[targetGroup].length >= TEAMS_PER_GROUP) {
+        console.error("Erro de lógica no sorteio: Grupo alvo inválido.");
+        return currentGroups; // Retorna o estado atual sem mudanças
+      }
 
-    if (teamsToDraw.length === 1) {
-      showFeedback("success", "Sorteio concluído!");
-    }
+      if (drawnCount === allTeams.length - 1) {
+        showFeedback("success", "Sorteio concluído!");
+      }
 
-    setIsDrawing(false);
+      return {
+        ...currentGroups,
+        [targetGroup]: [...currentGroups[targetGroup], drawnTeam],
+      };
+    });
   };
 
   const handleSaveGroups = async () => {
@@ -198,9 +207,10 @@ function SorteioPage() {
         ([groupName, teams]) =>
           teams.map((team) => ({ teamId: team.id, group: groupName }))
       );
+
       if (groupAssignments.length !== allTeams.length) {
         throw new Error(
-          "O sorteio não foi concluído. Salve apenas quando todos os times estiverem em grupos."
+          `O sorteio não foi concluído. Apenas ${groupAssignments.length}/${allTeams.length} times foram alocados.`
         );
       }
       await api.post("/teams/assign-groups", { assignments: groupAssignments });
@@ -208,7 +218,7 @@ function SorteioPage() {
     } catch (err) {
       showFeedback(
         "error",
-        err.response?.data?.message || "Erro ao salvar os grupos."
+        err.message || "Erro ao salvar os grupos."
       );
     } finally {
       setIsSaving(false);
@@ -217,10 +227,7 @@ function SorteioPage() {
 
   const handleExportPdf = async () => {
     if (teamsToDraw.length > 0) {
-      showFeedback(
-        "warning",
-        "Conclua o sorteio para exportar o resultado."
-      );
+      showFeedback("warning", "Conclua o sorteio para exportar o resultado.");
       return;
     }
     setIsGeneratingPdf(true);
@@ -290,7 +297,6 @@ function SorteioPage() {
               >
                 {isSaving ? "Salvando..." : "Salvar Grupos"}
               </Button>
-              {/* BOTÃO DE EXPORTAR PDF */}
               <Button
                 fullWidth
                 variant="contained"
