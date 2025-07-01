@@ -1,5 +1,4 @@
-// frontend/src/pages/SorteioPage.js
-
+// src/pages/SorteioPage.js
 import React, { useState, useEffect, useCallback } from "react";
 import api from "../services/api";
 import {
@@ -27,7 +26,7 @@ const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
-// Card para o time sorteado no Dialog
+// Componente para o card do time sorteado no Dialog
 const DrawnTeamCard = ({ team }) => (
   <Box textAlign="center" p={3}>
     <Avatar
@@ -53,6 +52,32 @@ const DrawnTeamCard = ({ team }) => (
   </Box>
 );
 
+// Componente para exibir um único time dentro de um grupo
+const TimeCardSorteio = ({ team, isVisible }) => (
+  <Paper
+    variant="outlined"
+    sx={{
+      display: "flex",
+      alignItems: "center",
+      p: 1.5,
+      mb: 1,
+      opacity: isVisible ? 1 : 0,
+      transform: isVisible ? "translateY(0)" : "translateY(20px)",
+      transition: "opacity 0.5s ease-out, transform 0.5s ease-out",
+      backgroundColor: "rgba(255, 255, 255, 0.05)",
+    }}
+  >
+    <Avatar src={team.url_escudo} sx={{ width: 32, height: 32, mr: 2 }} />
+    <Box>
+      <Typography sx={{ fontWeight: 500 }}>{team.nome}</Typography>
+      <Typography variant="caption" color="text.secondary">
+        {team.nome_cartola}
+      </Typography>
+    </Box>
+  </Paper>
+);
+
+// Componente principal da página
 function SorteioPage() {
   const [allTeams, setAllTeams] = useState([]);
   const [teamsToDraw, setTeamsToDraw] = useState([]);
@@ -77,7 +102,6 @@ function SorteioPage() {
       return acc;
     }, {});
     setGroups(initialGroups);
-    // Embaralha os times para o sorteio
     setTeamsToDraw([...teams].sort(() => Math.random() - 0.5));
     setLastDrawnTeam(null);
   }, []);
@@ -87,7 +111,6 @@ function SorteioPage() {
       setIsLoading(true);
       try {
         const response = await api.get("/teams");
-        // Filtra times que ainda não têm grupo definido
         const teamsWithoutGroup = response.data.filter(
           (team) => !team.group || team.group === "Sem Grupo"
         );
@@ -113,7 +136,6 @@ function SorteioPage() {
     fetchTeams();
   }, [initializeDraw]);
 
-  // Sorteia UM time
   const handleDrawOne = () => {
     if (isDrawing) return;
     setIsDrawing(true);
@@ -123,15 +145,13 @@ function SorteioPage() {
     setLastDrawnTeam(drawnTeam);
     setTeamsToDraw(remainingTeams);
 
-    // Animação: abre o dialog e fecha após um tempo
     setTimeout(() => setDialogOpen(true), 100);
     setTimeout(() => {
       setDialogOpen(false);
       placeTeamInGroup(drawnTeam);
-    }, 2500); // Duração da animação do sorteio
+    }, 2500);
   };
 
-  // Coloca o time sorteado no grupo correto
   const placeTeamInGroup = (drawnTeam) => {
     if (!drawnTeam) {
       setIsDrawing(false);
@@ -254,7 +274,6 @@ function SorteioPage() {
         )}
       </Paper>
 
-      {/* Grid dos Grupos */}
       <Grid container spacing={3}>
         {GROUP_NAMES.map((name) => (
           <Grid item xs={12} sm={6} lg={3} key={name}>
@@ -288,7 +307,6 @@ function SorteioPage() {
         ))}
       </Grid>
 
-      {/* Dialog da Animação */}
       <Dialog
         open={dialogOpen}
         TransitionComponent={Transition}
@@ -308,7 +326,6 @@ function SorteioPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Snackbar para Feedbacks */}
       <Snackbar
         open={feedback.open}
         autoHideDuration={4000}
