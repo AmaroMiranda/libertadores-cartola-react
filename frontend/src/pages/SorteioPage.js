@@ -396,7 +396,7 @@ function SorteioPage() {
       {/* Snackbar para Feedbacks */}
       <Snackbar
         open={feedback.open}
-        autoHideDuration={4000}
+        autoHideDuration={2000}
         onClose={() => setFeedback({ ...feedback, open: false })}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
