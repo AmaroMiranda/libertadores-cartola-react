@@ -10,7 +10,6 @@ import {
   Image,
 } from "@react-pdf/renderer";
 
-// Registre as fontes que você já usa no projeto
 Font.register({
   family: "Exo 2",
   fonts: [
@@ -25,7 +24,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#1A1A2E",
     color: "#EAEAEA",
     padding: 30,
-    flexDirection: "column", // Garante o fluxo vertical
+    flexDirection: "column",
   },
   header: {
     textAlign: "center",
@@ -45,9 +44,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     borderBottomWidth: 0.5,
     borderBottomColor: "gray",
-    alignItems: "center",
+    alignItems: "stretch", // Alterado para 'stretch' para garantir alinhamento vertical
   },
-  tableHeader: { backgroundColor: "#2C2C44" },
+  tableHeader: {
+    backgroundColor: "#2C2C44",
+    alignItems: "center", // Garante que o header também se alinhe
+  },
   tableCell: {
     borderTopWidth: 0.5,
     borderLeftWidth: 0.5,
@@ -55,32 +57,50 @@ const styles = StyleSheet.create({
     padding: 6,
     justifyContent: "center",
   },
+  // --- LARGURAS DAS COLUNAS AJUSTADAS PARA MELHOR ENCAIXE ---
   colPos: { width: "8%" },
-  colTime: { width: "42%" },
-  colCartola: { width: "35%" },
+  colTime: { width: "40%" },
+  colCartola: { width: "37%" },
   colGrupo: { width: "15%" },
+
   headerTextCell: {
     fontSize: 10,
     fontWeight: "bold",
     textAlign: "center",
     color: "#B0B0C0",
   },
-  teamCell: { flexDirection: "row", alignItems: "center" },
-  escudo: { width: 20, height: 20, marginRight: 8 },
-  cellText: { fontSize: 10 },
+  // --- CÉLULA DO TIME COM COMPORTAMENTO FLEXÍVEL ---
+  teamCell: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap", // Permite que o conteúdo quebre a linha se necessário
+  },
+  teamInfo: {
+    flexShrink: 1, // Permite que este container encolha para caber
+    flexDirection: "column",
+  },
+  escudo: {
+    width: 20,
+    height: 20,
+    marginRight: 8,
+    flexShrink: 0, // Impede que o escudo encolha
+  },
+  cellText: {
+    fontSize: 10,
+    // A propriedade a seguir é importante para textos longos
+    hyphenationCallback: (word) => [word],
+  },
   cellTextCenter: { fontSize: 10, textAlign: "center" },
 });
 
 const RelatorioTimesAdminDocument = ({ teams, apiUrl }) => (
   <Document title="Lista de times - Libertadores do Cartola">
-    {/* A MUDANÇA PRINCIPAL ESTÁ AQUI:
-      - Removi o prop `size="A4"`, permitindo que a página cresça verticalmente.
-      - Adicionei a propriedade `wrap={false}` na View da tabela para garantir que ela não se quebre internamente.
-    */}
     <Page style={styles.page}>
       <View style={styles.header}>
         <Text style={styles.headerText}>Libertadores do Cartola</Text>
-        <Text style={styles.headerText}>Lista de Times da Competição</Text>
+        <Text style={{ ...styles.headerText, fontSize: 18, marginTop: 4 }}>
+          Lista de Times da Competição
+        </Text>
       </View>
       <View style={styles.table} wrap={false}>
         <View style={[styles.tableRow, styles.tableHeader]}>
@@ -102,6 +122,7 @@ const RelatorioTimesAdminDocument = ({ teams, apiUrl }) => (
             <View style={[styles.tableCell, styles.colPos]}>
               <Text style={styles.cellTextCenter}>{index + 1}</Text>
             </View>
+            {/* --- ESTRUTURA DA CÉLULA DO TIME AJUSTADA --- */}
             <View style={[styles.tableCell, styles.colTime]}>
               <View style={styles.teamCell}>
                 <Image
@@ -110,7 +131,9 @@ const RelatorioTimesAdminDocument = ({ teams, apiUrl }) => (
                     team.url_escudo
                   )}`}
                 />
-                <Text style={styles.cellText}>{team.nome}</Text>
+                <View style={styles.teamInfo}>
+                  <Text style={styles.cellText}>{team.nome}</Text>
+                </View>
               </View>
             </View>
             <View style={[styles.tableCell, styles.colCartola]}>
