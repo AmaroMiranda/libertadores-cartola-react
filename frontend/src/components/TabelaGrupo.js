@@ -1,3 +1,4 @@
+// src/components/TabelaGrupo.js
 import React from "react";
 import {
   Table,
@@ -93,7 +94,6 @@ const TimeCardMobile = ({ time, index, rounds }) => {
           </Typography>
         </Box>
       </Box>
-      {/* O uso do Accordion é uma solução inteligente para não sobrecarregar a UI mobile com informações. */}
       <Accordion
         disableGutters
         elevation={0}
@@ -119,10 +119,11 @@ const TimeCardMobile = ({ time, index, rounds }) => {
         </AccordionSummary>
         <AccordionDetails sx={{ backgroundColor: "rgba(0,0,0,0.2)", p: 2 }}>
           <Grid container spacing={1} justifyContent="center">
-            {rounds.map((r) => (
+            {/* CORREÇÃO AQUI: Usa o índice para exibir R1, R2, etc. */}
+            {rounds.map((r, roundIndex) => (
               <Grid item xs={4} sm={2} key={r} sx={{ textAlign: "center" }}>
                 <Typography variant="caption" color="text.secondary">
-                  Rod. {r}
+                  Rod. {roundIndex + 1}
                 </Typography>
                 <Typography sx={{ fontFamily: "monospace", fontWeight: 500 }}>
                   {(time.pontuacoes?.[`rodada_${r}`] || 0).toFixed(2)}
@@ -136,7 +137,6 @@ const TimeCardMobile = ({ time, index, rounds }) => {
   );
 };
 
-// Sub-componente para a Linha da Tabela (Desktop). O layout original estava ótimo.
 const TimeRowDesktop = ({ time, index, rounds }) => (
   <TableRow
     sx={{
@@ -211,7 +211,6 @@ const TimeRowDesktop = ({ time, index, rounds }) => (
 
 function TabelaGrupo({ nomeGrupo, times, rounds }) {
   const theme = useTheme();
-  // Alterei para 'md' para que tablets com resolução menor também usem a visão mobile, que é mais clara.
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const timesOrdenados = [...times].sort(
     (a, b) => (b.total || 0) - (a.total || 0)
@@ -241,11 +240,6 @@ function TabelaGrupo({ nomeGrupo, times, rounds }) {
         {hasGroup ? `Grupo ${nomeGrupo}` : "Times Sem Grupo"}
       </Typography>
 
-      {/*
-        Esta é a implementação ideal de responsividade: não apenas adaptar o tamanho,
-        mas mudar completamente o componente para o que funciona melhor em cada contexto.
-        Tabela em desktop, lista de cards em mobile. Perfeito.
-      */}
       {isMobile ? (
         <Box sx={{ p: { xs: 1, sm: 2 }, overflowY: "auto", flexGrow: 1 }}>
           {timesOrdenados.map((time, index) => (
@@ -272,9 +266,10 @@ function TabelaGrupo({ nomeGrupo, times, rounds }) {
                 <TableCell sx={{ width: "40%", fontWeight: "bold" }}>
                   Time / Cartoleiro
                 </TableCell>
-                {rounds.map((r) => (
+                {/* CORREÇÃO AQUI: Usa o índice para exibir R1, R2, etc. */}
+                {rounds.map((r, index) => (
                   <TableCell key={r} align="center" sx={{ fontWeight: "bold" }}>
-                    R{r}
+                    R{index + 1}
                   </TableCell>
                 ))}
                 <TableCell
