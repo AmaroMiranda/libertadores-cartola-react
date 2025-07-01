@@ -324,6 +324,34 @@ app.post('/api/scores/refresh/knockout', verifyToken, async (req, res) => {
     }
 });
 
+app.post('/api/teams/assign-groups', verifyToken, async (req, res) => {
+    const { assignments } = req.body; // Ex: [{ teamId: '...', group: 'A' }, ...]
+    
+    if (!Array.isArray(assignments)) {
+        return res.status(400).json({ message: 'O corpo da requisição deve ser um array de atribuições.' });
+    }
+
+    try {
+        const bulkOps = assignments.map(assignment => ({
+            updateOne: {
+                filter: { _id: assignment.teamId },
+                update: { $set: { group: assignment.group } }
+            }
+        }));
+
+        if (bulkOps.length > 0) {
+            await Team.bulkWrite(bulkOps);
+        }
+
+        res.status(200).json({ message: 'Grupos atualizados com sucesso!' });
+    } catch (error) {
+        console.error("Erro ao salvar grupos em massa:", error);
+        res.status(500).json({ message: 'Erro no servidor ao salvar os grupos.' });
+    }
+});
+
+
+
 // =================================================================
 // --- ROTAS PÚBLICAS E DE DADOS ---
 // =================================================================

@@ -40,6 +40,7 @@ import ConfrontosPage from "./pages/ConfrontosPage";
 import MataMataPage from "./pages/MataMataPage";
 import MataMataConfrontosPage from "./pages/MataMataConfrontosPage";
 import LoginPage from "./pages/LoginPage";
+import SorteioPage from "./pages/SorteioPage"; // Importação da nova página
 
 // Definição do tema da aplicação
 const fantasyTechTheme = createTheme({
@@ -258,12 +259,20 @@ function App() {
             />
             <Route path="/login" element={<LoginPage />} />
 
-            {/* ROTA PRIVADA (acessível apenas após login) */}
+            {/* ROTAS PRIVADAS (acessíveis apenas após login) */}
             <Route
               path="/admin"
               element={
                 <ProtectedRoute>
                   <AdminPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/sorteio"
+              element={
+                <ProtectedRoute>
+                  <SorteioPage />
                 </ProtectedRoute>
               }
             />

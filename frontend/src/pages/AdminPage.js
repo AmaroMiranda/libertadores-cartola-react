@@ -1,6 +1,7 @@
 // src/pages/AdminPage.js
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import api from "../services/api"; // IMPORTAÇÃO DO CLIENTE API
+import { Link as RouterLink } from "react-router-dom";
+import api from "../services/api";
 import {
   Container,
   Typography,
@@ -35,6 +36,7 @@ import {
 import DeleteIcon from "@mui/icons-material/Delete";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
+import CasinoIcon from "@mui/icons-material/Casino";
 import { pdf } from "@react-pdf/renderer";
 import { saveAs } from "file-saver";
 import RelatorioTimesAdminDocument from "../components/pdf/RelatorioTimesAdminDocument";
@@ -727,6 +729,21 @@ function AdminPage() {
           {feedback.message}
         </Alert>
       </Snackbar>
+
+      <Paper elevation={2} sx={{ p: { xs: 2, sm: 3 }, mb: 4 }}>
+        <Typography variant="h6" gutterBottom>
+          Sorteio da Fase de Grupos
+        </Typography>
+        <Button
+          component={RouterLink}
+          to="/admin/sorteio"
+          variant="contained"
+          color="primary"
+          startIcon={<CasinoIcon />}
+        >
+          Ir para a Página de Sorteio
+        </Button>
+      </Paper>
 
       <SettingsPanel
         rounds={rounds}
