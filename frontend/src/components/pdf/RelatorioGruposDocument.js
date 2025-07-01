@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
     borderBottomColor: "#00E5FF",
   },
   tableCell: {
-    paddingVertical: 8, // Padding vertical para dar espaço
+    paddingVertical: 8,
     paddingHorizontal: 6,
     justifyContent: "center",
   },
@@ -88,20 +88,22 @@ const styles = StyleSheet.create({
   },
   teamInfo: {
     flexDirection: "column",
-    flex: 1, // Permite que o container de texto ocupe o espaço restante
+    flex: 1,
   },
   teamName: { fontSize: 10 },
   cartolaName: { fontSize: 8, color: "#B0B0C0", marginTop: 2 },
+  // CORREÇÃO: Alinhamento centralizado
   scoreText: {
     fontFamily: "Courier",
     fontSize: 10,
-    textAlign: "right",
+    textAlign: "center",
   },
+  // CORREÇÃO: Alinhamento centralizado
   placeholderText: {
     fontFamily: "Courier",
     fontSize: 10,
-    textAlign: "right", // Alinhamento corrigido
-    color: "#6a737d", // Cor ajustada para melhor contraste
+    textAlign: "center",
+    color: "#888",
   },
   posText: {
     fontSize: 12,
@@ -112,7 +114,7 @@ const styles = StyleSheet.create({
     fontFamily: "Courier",
     fontSize: 12,
     fontWeight: "bold",
-    textAlign: "right",
+    textAlign: "right", // O total fica melhor alinhado à direita
     color: "#00E5FF",
   },
 });
@@ -120,12 +122,11 @@ const styles = StyleSheet.create({
 const RelatorioGruposDocument = ({ grupos, rounds, apiUrl }) => {
   const displayRounds = Array.from({ length: 6 }, (_, i) => i + 1);
 
-  // --- LÓGICA DE CÁLCULO DE ALTURA DINÂMICA ---
-  const PAGE_PADDING = 60; // 30 em cima + 30 embaixo
+  const PAGE_PADDING = 60;
   const HEADER_HEIGHT = 85;
   const GROUP_TITLE_HEIGHT = 40;
   const TABLE_HEADER_HEIGHT = 35;
-  const ROW_HEIGHT = 45; // Altura estimada por linha
+  const ROW_HEIGHT = 45;
 
   const calculatePageHeight = (teamCount) => {
     return (
@@ -146,7 +147,6 @@ const RelatorioGruposDocument = ({ grupos, rounds, apiUrl }) => {
           const pageHeight = calculatePageHeight(teamsInGroup.length);
 
           return (
-            // A MÁGICA ESTÁ AQUI: O tamanho da página é calculado dinamicamente
             <Page
               key={nomeGrupo}
               style={styles.page}
@@ -219,7 +219,7 @@ const RelatorioGruposDocument = ({ grupos, rounds, apiUrl }) => {
                                 {score.toFixed(2)}
                               </Text>
                             ) : (
-                              <Text style={styles.placeholderText}> - </Text>
+                              <Text style={styles.placeholderText}>-</Text>
                             )}
                           </View>
                         );
