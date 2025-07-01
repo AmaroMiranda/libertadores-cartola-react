@@ -1,7 +1,6 @@
 // src/pages/HomePage.js
 import React, { useState, useEffect, useCallback } from "react";
-// import axios from "axios"; // JÁ NÃO É NECESSÁRIO
-import api from "../services/api"; // IMPORTAÇÃO DO NOVO CLIENTE
+import api from "../services/api";
 import TabelaGrupo from "../components/TabelaGrupo";
 import {
   Typography,
@@ -9,13 +8,12 @@ import {
   Box,
   Alert,
   Button,
+  Snackbar, // Importe o Snackbar
 } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
 import { pdf } from "@react-pdf/renderer";
-import { saveAs } from "file-saver";
+import { savePdf } from "../utils/download"; // A função que já criamos
 import RelatorioGruposDocument from "../components/pdf/RelatorioGruposDocument";
-
-// const API_URL = ...; // JÁ NÃO É NECESSÁRIO
 
 function HomePage() {
   const [grupos, setGrupos] = useState({});
@@ -23,12 +21,19 @@ function HomePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [feedback, setFeedback] = useState({
+    open: false,
+    message: "",
+    type: "info",
+  });
+
+  const showFeedback = (type, message) =>
+    setFeedback({ open: true, type, message });
 
   const fetchResultados = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      // As chamadas agora usam o cliente API centralizado
       const [resultadosRes, settingsRes] = await Promise.all([
         api.get("/fase-de-grupos"),
         api.get("/settings"),
@@ -62,9 +67,7 @@ function HomePage() {
   const handleGeneratePdf = async () => {
     setIsGeneratingPdf(true);
     try {
-      // Garante que o URL base passado para o PDF não tenha o /api duplicado.
       const API_BASE_URL = api.defaults.baseURL.replace("/api", "");
-
       const doc = (
         <RelatorioGruposDocument
           grupos={grupos}
@@ -73,10 +76,14 @@ function HomePage() {
         />
       );
       const blob = await pdf(doc).toBlob();
-      saveAs(blob, "classificacao-libertadores-cartola.pdf");
+      await savePdf(
+        blob,
+        "classificacao-libertadores-cartola.pdf",
+        showFeedback
+      );
     } catch (pdfError) {
       console.error("Erro ao gerar o PDF:", pdfError);
-      setError("Ocorreu um erro ao gerar o PDF.");
+      showFeedback("error", "Ocorreu um erro ao gerar o PDF.");
     } finally {
       setIsGeneratingPdf(false);
     }
@@ -159,6 +166,21 @@ function HomePage() {
           )}
         </Box>
       )}
+      {/* Snackbar para exibir feedbacks */}
+      <Snackbar
+        open={feedback.open}
+        autoHideDuration={6000}
+        onClose={() => setFeedback({ ...feedback, open: false })}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setFeedback({ ...feedback, open: false })}
+          severity={feedback.type || "info"}
+          sx={{ width: "100%" }}
+        >
+          {feedback.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

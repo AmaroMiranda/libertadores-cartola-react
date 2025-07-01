@@ -39,7 +39,7 @@ import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
 import CasinoIcon from "@mui/icons-material/Casino";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import { pdf } from "@react-pdf/renderer";
-import { saveAs } from "file-saver";
+import { savePdf } from "../utils/download";
 import RelatorioTimesAdminDocument from "../components/pdf/RelatorioTimesAdminDocument";
 import ShareIcon from "@mui/icons-material/Share";
 
@@ -200,7 +200,6 @@ const TeamsPanel = ({
   const handleGeneratePdf = async () => {
     if (!teams || teams.length === 0) return;
     setIsGeneratingPdf(true);
-    showFeedback("info", "Gerando PDF da lista de times...");
 
     try {
       const API_BASE_URL = api.defaults.baseURL.replace("/api", "");
@@ -209,8 +208,7 @@ const TeamsPanel = ({
         <RelatorioTimesAdminDocument teams={teams} apiUrl={API_BASE_URL} />
       );
       const blob = await pdf(doc).toBlob();
-      saveAs(blob, "relatorio-times-admin.pdf");
-      showFeedback("success", "PDF gerado com sucesso!");
+      await savePdf(blob, "relatorio-times-admin.pdf", showFeedback);
     } catch (e) {
       console.error("Erro ao gerar PDF da lista de times:", e);
       showFeedback("error", "Ocorreu um erro ao gerar o PDF.");

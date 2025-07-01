@@ -1,7 +1,6 @@
 // src/pages/ConfrontosPage.js
 import React, { useState, useEffect, useMemo } from "react";
-// import axios from "axios"; // JÁ NÃO É NECESSÁRIO
-import api from "../services/api"; // IMPORTAÇÃO DO NOVO CLIENTE
+import api from "../services/api";
 import {
   Typography,
   CircularProgress,
@@ -14,14 +13,13 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Snackbar,
 } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
 import MatchCard from "../components/MatchCard";
 import { pdf } from "@react-pdf/renderer";
-import { saveAs } from "file-saver";
+import { savePdf } from "../utils/download";
 import RelatorioConfrontosDocument from "../components/pdf/RelatorioConfrontosDocument";
-
-// const API_URL = ...; // JÁ NÃO É NECESSÁRIO
 
 function ConfrontosPage() {
   const [matches, setMatches] = useState([]);
@@ -29,13 +27,20 @@ function ConfrontosPage() {
   const [error, setError] = useState("");
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [selectedRound, setSelectedRound] = useState("all");
+  const [feedback, setFeedback] = useState({
+    open: false,
+    message: "",
+    type: "info",
+  });
+
+  const showFeedback = (type, message) =>
+    setFeedback({ open: true, type, message });
 
   useEffect(() => {
     const fetchConfrontos = async () => {
       setLoading(true);
       setError("");
       try {
-        // A chamada agora usa o cliente API centralizado
         const response = await api.get("/confrontos");
         setMatches(response.data);
       } catch (err) {
@@ -73,7 +78,6 @@ function ConfrontosPage() {
         fileName = `relatorio-confrontos-rodada-${roundNumber}.pdf`;
       }
 
-      // CORREÇÃO: Garante que o URL base passado para o PDF não tenha o /api duplicado.
       const API_BASE_URL = api.defaults.baseURL.replace("/api", "");
 
       const doc = (
@@ -83,10 +87,10 @@ function ConfrontosPage() {
         />
       );
       const blob = await pdf(doc).toBlob();
-      saveAs(blob, fileName);
+      await savePdf(blob, fileName, showFeedback);
     } catch (e) {
       console.error("Erro ao gerar PDF dos confrontos:", e);
-      setError("Ocorreu um erro ao gerar o PDF.");
+      showFeedback("error", "Ocorreu um erro ao gerar o PDF.");
     } finally {
       setIsGeneratingPdf(false);
     }
@@ -196,6 +200,20 @@ function ConfrontosPage() {
           )}
         </Box>
       )}
+      <Snackbar
+        open={feedback.open}
+        autoHideDuration={6000}
+        onClose={() => setFeedback({ ...feedback, open: false })}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setFeedback({ ...feedback, open: false })}
+          severity={feedback.type || "info"}
+          sx={{ width: "100%" }}
+        >
+          {feedback.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
