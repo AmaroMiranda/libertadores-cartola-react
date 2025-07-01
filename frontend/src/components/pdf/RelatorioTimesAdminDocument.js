@@ -1,3 +1,4 @@
+// src/components/pdf/RelatorioTimesAdminDocument.js
 import React from "react";
 import {
   Page,
@@ -24,6 +25,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#1A1A2E",
     color: "#EAEAEA",
     padding: 30,
+    flexDirection: "column", // Garante o fluxo vertical
   },
   header: {
     textAlign: "center",
@@ -71,12 +73,16 @@ const styles = StyleSheet.create({
 
 const RelatorioTimesAdminDocument = ({ teams, apiUrl }) => (
   <Document title="Lista de times - Libertadores do Cartola">
-    <Page size="A4" style={styles.page}>
+    {/* A MUDANÇA PRINCIPAL ESTÁ AQUI:
+      - Removi o prop `size="A4"`, permitindo que a página cresça verticalmente.
+      - Adicionei a propriedade `wrap={false}` na View da tabela para garantir que ela não se quebre internamente.
+    */}
+    <Page style={styles.page}>
       <View style={styles.header}>
         <Text style={styles.headerText}>Libertadores do Cartola</Text>
         <Text style={styles.headerText}>Lista de Times da Competição</Text>
       </View>
-      <View style={styles.table}>
+      <View style={styles.table} wrap={false}>
         <View style={[styles.tableRow, styles.tableHeader]}>
           <View style={[styles.tableCell, styles.colPos]}>
             <Text style={styles.headerTextCell}>#</Text>
