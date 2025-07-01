@@ -1,3 +1,4 @@
+// src/components/pdf/RelatorioGruposDocument.js
 import React from "react";
 import {
   Page,
@@ -5,10 +6,11 @@ import {
   View,
   Document,
   StyleSheet,
-  Image,
   Font,
+  Image,
 } from "@react-pdf/renderer";
 
+// --- FONTES ---
 Font.register({
   family: "Exo 2",
   fonts: [
@@ -16,101 +18,84 @@ Font.register({
     { src: "/fonts/Exo2-Bold.ttf", fontWeight: "bold" },
   ],
 });
+Font.register({
+  family: "Courier",
+  fonts: [{ src: "/fonts/Courier-Prime-Bold.ttf", fontWeight: "bold" }],
+});
 
-// FUNÇÃO PARA TRUNCAR TEXTO LONGO
-const truncateText = (text, maxLength) => {
-  if (!text) return "";
-  if (text.length <= maxLength) {
-    return text;
-  }
-  return text.slice(0, maxLength).trim() + "...";
-};
-
-// ESTILO FINAL E REFINADO
+// --- ESTILOS CORRIGIDOS E REFINADOS ---
 const styles = StyleSheet.create({
   page: {
     fontFamily: "Exo 2",
     backgroundColor: "#1A1A2E",
     color: "#EAEAEA",
-    paddingHorizontal: 30,
-    paddingVertical: 20,
+    padding: 30,
+    flexDirection: "column",
   },
   header: {
     textAlign: "center",
     marginBottom: 20,
     borderBottomWidth: 1.5,
-    // COR ALTERADA para coincidir com o total
     borderBottomColor: "#00E5FF",
     paddingBottom: 15,
   },
-  headerText: {
-    // COR ALTERADA para coincidir com o total
-    color: "#00E5FF",
-    fontSize: 24,
-    fontWeight: "bold",
-  },
+  headerText: { color: "#00E5FF", fontSize: 24, fontWeight: "bold" },
   groupTitle: {
     fontSize: 22,
     fontWeight: "bold",
-    color: "#EAEAEA",
-    marginBottom: 20,
+    color: "#FFFFFF",
+    marginBottom: 15,
   },
   table: {
     width: "100%",
-    borderRightWidth: 0.5,
-    borderBottomWidth: 0.5,
-    borderColor: "gray",
   },
   tableRow: {
     flexDirection: "row",
+    borderBottomWidth: 0.5,
+    borderBottomColor: "gray",
+    alignItems: "stretch", // Garante que todas as células da linha tenham a mesma altura
   },
-  qualifiedRow: {
-    backgroundColor: "rgba(0, 229, 255, 0.1)",
+  tableHeader: {
+    backgroundColor: "#2C2C44",
+    borderBottomWidth: 1.5,
+    borderBottomColor: "#00E5FF",
   },
   tableCell: {
-    borderTopWidth: 0.5,
-    borderLeftWidth: 0.5,
-    borderColor: "gray",
-    padding: 8,
+    padding: 6,
+    justifyContent: "center",
   },
-  // LARGURAS FIXAS E ESTÁVEIS
-  colPos: { width: 35 },
-  colTime: { width: 135 },
-  colRodada: { width: 50 },
-  colTotal: { width: 65 },
+  // --- LARGURAS DAS COLUNAS AJUSTADAS PARA MELHOR ENCAIXE ---
+  colPos: { width: "7%" },
+  colTime: { width: "35%" },
+  colRodada: { width: "9%" }, // Ajustado para 6 rodadas
+  colTotal: { width: "12%" },
+
   headerTextCell: {
-    fontFamily: "Exo 2",
-    fontWeight: "bold",
     fontSize: 10,
+    fontWeight: "bold",
     textAlign: "center",
+    color: "#B0B0C0",
   },
   teamCellContainer: {
     flexDirection: "row",
     alignItems: "center",
   },
-  teamInfo: {
-    flexDirection: "column",
-    paddingLeft: 8,
-  },
-  teamName: {
-    fontSize: 10,
-  },
-  cartolaName: {
-    fontSize: 8,
-    color: "#B0B0C0",
-    marginTop: 2,
-  },
   escudo: {
-    width: 24,
-    height: 24,
+    width: 20,
+    height: 20,
+    marginRight: 8,
     flexShrink: 0,
   },
+  teamInfo: {
+    flexDirection: "column",
+    flexShrink: 1, // Permite que o texto encolha e quebre a linha
+  },
+  teamName: { fontSize: 10 },
+  cartolaName: { fontSize: 8, color: "#B0B0C0", marginTop: 2 },
   scoreText: {
     fontFamily: "Courier",
-    fontSize: 11,
-    fontWeight: "bold",
+    fontSize: 10,
     textAlign: "right",
-    color: "#EAEAEA",
   },
   posText: {
     fontSize: 12,
@@ -131,11 +116,7 @@ const RelatorioGruposDocument = ({ grupos, rounds, apiUrl }) => (
     {Object.keys(grupos)
       .sort()
       .map((nomeGrupo) => (
-        <Page
-          key={nomeGrupo}
-          size={{ width: 595, height: 380 }}
-          style={styles.page}
-        >
+        <Page key={nomeGrupo} size="A4" style={styles.page}>
           <View style={styles.header}>
             <Text style={styles.headerText}>Libertadores do Cartola</Text>
           </View>
@@ -145,120 +126,68 @@ const RelatorioGruposDocument = ({ grupos, rounds, apiUrl }) => (
               : "Times Sem Grupo"}
           </Text>
           <View style={styles.table}>
-            {/* Cabeçalho */}
-            <View style={styles.tableRow}>
-              <View
-                style={[
-                  styles.tableCell,
-                  styles.colPos,
-                  { justifyContent: "center" },
-                ]}
-              >
+            {/* --- CABEÇALHO COM A LÓGICA DE RODADAS CORRIGIDA --- */}
+            <View style={[styles.tableRow, styles.tableHeader]}>
+              <View style={[styles.tableCell, styles.colPos]}>
                 <Text style={styles.headerTextCell}>#</Text>
               </View>
-              <View
-                style={[
-                  styles.tableCell,
-                  styles.colTime,
-                  { justifyContent: "center" },
-                ]}
-              >
-                <Text style={[styles.headerTextCell, { textAlign: "left" }]}>
-                  Time / Cartoleiro
-                </Text>
+              <View style={[styles.tableCell, styles.colTime]}>
+                <Text style={styles.headerTextCell}>Time / Cartoleiro</Text>
               </View>
-              {rounds.map((r) => (
+              {rounds.map((round, index) => (
                 <View
-                  key={r}
-                  style={[
-                    styles.tableCell,
-                    styles.colRodada,
-                    { justifyContent: "center" },
-                  ]}
+                  key={`header-r${index + 1}`}
+                  style={[styles.tableCell, styles.colRodada]}
                 >
-                  <Text style={styles.headerTextCell}>R{r}</Text>
+                  <Text style={styles.headerTextCell}>R{index + 1}</Text>
                 </View>
               ))}
-              <View
-                style={[
-                  styles.tableCell,
-                  styles.colTotal,
-                  { justifyContent: "center" },
-                ]}
-              >
-                <Text style={[styles.headerTextCell, { textAlign: "right" }]}>
-                  Total
-                </Text>
+              <View style={[styles.tableCell, styles.colTotal]}>
+                <Text style={styles.headerTextCell}>Total</Text>
               </View>
             </View>
+
             {/* Corpo da Tabela */}
             {grupos[nomeGrupo]
               .sort((a, b) => (b.total || 0) - (a.total || 0))
-              .map((time, index) => {
-                const isQualified = index < 2;
-                const rowStyles = [styles.tableRow];
-                if (isQualified) {
-                  rowStyles.push(styles.qualifiedRow);
-                }
-
-                return (
-                  <View key={time.id} style={rowStyles}>
-                    <View
-                      style={[
-                        styles.tableCell,
-                        styles.colPos,
-                        { justifyContent: "center" },
-                      ]}
-                    >
-                      <Text style={styles.posText}>{index + 1}</Text>
-                    </View>
-                    <View style={[styles.tableCell, styles.colTime]}>
-                      <View style={styles.teamCellContainer}>
-                        <Image
-                          style={styles.escudo}
-                          src={`${apiUrl}/api/image-proxy?url=${encodeURIComponent(
-                            time.url_escudo
-                          )}`}
-                          cache={false}
-                        />
-                        <View style={styles.teamInfo}>
-                          <Text style={styles.teamName}>
-                            {truncateText(time.nome, 16)}
-                          </Text>
-                          <Text style={styles.cartolaName}>
-                            {truncateText(time.nome_cartola, 18)}
-                          </Text>
-                        </View>
-                      </View>
-                    </View>
-                    {rounds.map((r) => (
-                      <View
-                        key={r}
-                        style={[
-                          styles.tableCell,
-                          styles.colRodada,
-                          { justifyContent: "center" },
-                        ]}
-                      >
-                        <Text style={styles.scoreText}>
-                          {(time.pontuacoes?.[`rodada_${r}`] || 0).toFixed(2)}
+              .map((time, index) => (
+                <View key={time.id} style={styles.tableRow}>
+                  <View style={[styles.tableCell, styles.colPos]}>
+                    <Text style={styles.posText}>{index + 1}</Text>
+                  </View>
+                  <View style={[styles.tableCell, styles.colTime]}>
+                    <View style={styles.teamCellContainer}>
+                      <Image
+                        style={styles.escudo}
+                        src={`${apiUrl}/api/image-proxy?url=${encodeURIComponent(
+                          time.url_escudo
+                        )}`}
+                      />
+                      <View style={styles.teamInfo}>
+                        <Text style={styles.teamName}>{time.nome}</Text>
+                        <Text style={styles.cartolaName}>
+                          {time.nome_cartola}
                         </Text>
                       </View>
-                    ))}
-                    <View
-                      style={[
-                        styles.tableCell,
-                        styles.colTotal,
-                        { justifyContent: "center" },
-                      ]}
-                    >
-                      <Text style={styles.totalScoreText}>
-                        {(time.total || 0).toFixed(2)}
-                      </Text>
                     </View>
                   </View>
-                );
-              })}
+                  {rounds.map((r) => (
+                    <View
+                      key={`score-${time.id}-${r}`}
+                      style={[styles.tableCell, styles.colRodada]}
+                    >
+                      <Text style={styles.scoreText}>
+                        {(time.pontuacoes?.[`rodada_${r}`] || 0).toFixed(2)}
+                      </Text>
+                    </View>
+                  ))}
+                  <View style={[styles.tableCell, styles.colTotal]}>
+                    <Text style={styles.totalScoreText}>
+                      {(time.total || 0).toFixed(2)}
+                    </Text>
+                  </View>
+                </View>
+              ))}
           </View>
         </Page>
       ))}
