@@ -350,6 +350,18 @@ app.post('/api/teams/assign-groups', verifyToken, async (req, res) => {
     }
 });
 
+app.post('/api/teams/reset-groups', verifyToken, async (req, res) => {
+    try {
+        // Atualiza todos os documentos na coleção Team, definindo o campo 'group' como null
+        const result = await Team.updateMany({}, { $set: { group: null } });
+        
+        res.status(200).json({ message: `Grupos de ${result.modifiedCount} times resetados com sucesso!` });
+    } catch (error) {
+        console.error("Erro ao resetar os grupos:", error);
+        res.status(500).json({ message: 'Erro no servidor ao resetar os grupos.' });
+    }
+});
+
 
 
 // =================================================================
