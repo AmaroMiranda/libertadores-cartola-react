@@ -18,76 +18,74 @@ Font.register({
   ],
 });
 
-// --- ESTILOS ---
+// --- ESTILOS (REFEITOS PARA MÁXIMA ROBUSTEZ) ---
 const styles = StyleSheet.create({
   page: {
     fontFamily: "Exo 2",
     backgroundColor: "#1A1A2E",
     color: "#EAEAEA",
-    padding: 20,
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-around", // Distribui o espaço
-    alignContent: "flex-start",
+    padding: 30, // Padding generoso
   },
   header: {
-    width: "100%",
     textAlign: "center",
-    marginBottom: 20,
+    marginBottom: 25,
     borderBottomWidth: 1.5,
     borderBottomColor: "#00E5FF",
     paddingBottom: 15,
   },
   headerText: { color: "#00E5FF", fontSize: 24, fontWeight: "bold" },
+  // Usar a prop 'break' garante que um grupo não será cortado entre páginas
   groupContainer: {
-    width: "48%", // Em paisagem, 48% funciona bem para 2 colunas
     backgroundColor: "#2C2C44",
     borderRadius: 5,
-    padding: 12,
-    marginBottom: 15,
+    padding: 15,
+    marginBottom: 20, // Espaço entre os grupos
     borderWidth: 1,
     borderColor: "rgba(0, 229, 255, 0.5)",
+    break: "avoid", // Impede que o grupo seja dividido entre páginas
   },
   groupTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "bold",
     color: "#FFFFFF",
-    marginBottom: 10,
-    paddingBottom: 5,
+    marginBottom: 12,
+    paddingBottom: 6,
     borderBottomWidth: 1,
     borderBottomColor: "gray",
   },
   teamRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 8,
+    marginBottom: 10, // Aumenta o espaço entre os times
+    padding: 5,
   },
   escudo: {
-    width: 24,
-    height: 24,
-    marginRight: 8,
+    width: 30,
+    height: 30,
+    marginRight: 12,
   },
   teamInfo: {
     flexDirection: "column",
   },
   teamName: {
-    fontSize: 10,
+    fontSize: 12, // Aumenta a fonte para melhor legibilidade
   },
   cartolaName: {
-    fontSize: 8,
+    fontSize: 9,
     color: "#B0B0C0",
+    marginTop: 2,
   },
 });
 
 // --- COMPONENTE DO DOCUMENTO ---
 const RelatorioSorteioDocument = ({ groups, apiUrl }) => (
   <Document title="Resultado do Sorteio dos Grupos">
-    {/* AQUI ESTÁ A MUDANÇA: orientation="landscape" */}
-    <Page size="A4" orientation="landscape" style={styles.page}>
+    <Page size="A4" style={styles.page}>
       <View style={styles.header}>
         <Text style={styles.headerText}>Resultado do Sorteio</Text>
       </View>
 
+      {/* Renderiza um grupo por vez, em uma única coluna */}
       {Object.keys(groups)
         .sort()
         .map((groupName) => (
