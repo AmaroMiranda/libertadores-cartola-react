@@ -23,7 +23,7 @@ Font.register({
   fonts: [{ src: "/fonts/Courier-Prime-Bold.ttf", fontWeight: "bold" }],
 });
 
-// --- ESTILOS FINAIS E OTIMIZADOS ---
+// --- ESTILOS COM A CORREÇÃO DE ALINHAMENTO ---
 const styles = StyleSheet.create({
   page: {
     fontFamily: "Exo 2",
@@ -60,16 +60,19 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1.5,
     borderBottomColor: "#00E5FF",
   },
+  // Estilo base da célula
   tableCell: {
     paddingVertical: 8,
-    paddingHorizontal: 6,
+    paddingHorizontal: 4, // Padding horizontal reduzido para dar mais espaço
     justifyContent: "center",
   },
+  // Larguras das colunas
   colPos: { width: "6%" },
   colTime: { width: "37%" },
   colRodada: { width: "8%" },
   colTotal: { width: "11%" },
 
+  // Célula do header (texto)
   headerTextCell: {
     fontSize: 10,
     fontWeight: "bold",
@@ -92,17 +95,20 @@ const styles = StyleSheet.create({
   },
   teamName: { fontSize: 10 },
   cartolaName: { fontSize: 8, color: "#B0B0C0", marginTop: 2 },
-  // CORREÇÃO: Alinhamento centralizado
+
+  // *** AQUI ESTÁ A CORREÇÃO PRINCIPAL ***
+  // Célula que força a centralização do seu conteúdo
+  centerAlignedCell: {
+    alignItems: "center", // Centraliza horizontalmente
+    justifyContent: "center", // Centraliza verticalmente
+  },
   scoreText: {
     fontFamily: "Courier",
     fontSize: 10,
-    textAlign: "center",
   },
-  // CORREÇÃO: Alinhamento centralizado
   placeholderText: {
     fontFamily: "Courier",
     fontSize: 10,
-    textAlign: "center",
     color: "#888",
   },
   posText: {
@@ -114,7 +120,7 @@ const styles = StyleSheet.create({
     fontFamily: "Courier",
     fontSize: 12,
     fontWeight: "bold",
-    textAlign: "right", // O total fica melhor alinhado à direita
+    textAlign: "right",
     color: "#00E5FF",
   },
 });
@@ -162,7 +168,7 @@ const RelatorioGruposDocument = ({ grupos, rounds, apiUrl }) => {
               </Text>
               <View style={styles.table} wrap={false}>
                 <View style={[styles.tableRow, styles.tableHeader]}>
-                  <View style={[styles.tableCell, styles.colPos]}>
+                  <View style={[styles.tableCell, styles.colPos, styles.centerAlignedCell]}>
                     <Text style={styles.headerTextCell}>#</Text>
                   </View>
                   <View style={[styles.tableCell, styles.colTime]}>
@@ -171,7 +177,7 @@ const RelatorioGruposDocument = ({ grupos, rounds, apiUrl }) => {
                   {displayRounds.map((roundNumber) => (
                     <View
                       key={`header-r${roundNumber}`}
-                      style={[styles.tableCell, styles.colRodada]}
+                      style={[styles.tableCell, styles.colRodada, styles.centerAlignedCell]}
                     >
                       <Text style={styles.headerTextCell}>R{roundNumber}</Text>
                     </View>
@@ -185,7 +191,7 @@ const RelatorioGruposDocument = ({ grupos, rounds, apiUrl }) => {
                   .sort((a, b) => (b.total || 0) - (a.total || 0))
                   .map((time, index) => (
                     <View key={time.id} style={styles.tableRow}>
-                      <View style={[styles.tableCell, styles.colPos]}>
+                      <View style={[styles.tableCell, styles.colPos, styles.centerAlignedCell]}>
                         <Text style={styles.posText}>{index + 1}</Text>
                       </View>
                       <View style={[styles.tableCell, styles.colTime]}>
@@ -212,7 +218,7 @@ const RelatorioGruposDocument = ({ grupos, rounds, apiUrl }) => {
                         return (
                           <View
                             key={`score-${time.id}-r${roundIndex}`}
-                            style={[styles.tableCell, styles.colRodada]}
+                            style={[styles.tableCell, styles.colRodada, styles.centerAlignedCell]}
                           >
                             {typeof score === "number" ? (
                               <Text style={styles.scoreText}>
