@@ -61,7 +61,8 @@ const styles = StyleSheet.create({
     borderBottomColor: "#00E5FF",
   },
   tableCell: {
-    padding: 6,
+    paddingVertical: 8, // Padding vertical para dar espaço
+    paddingHorizontal: 6,
     justifyContent: "center",
   },
   colPos: { width: "6%" },
@@ -87,7 +88,7 @@ const styles = StyleSheet.create({
   },
   teamInfo: {
     flexDirection: "column",
-    flexShrink: 1,
+    flex: 1, // Permite que o container de texto ocupe o espaço restante
   },
   teamName: { fontSize: 10 },
   cartolaName: { fontSize: 8, color: "#B0B0C0", marginTop: 2 },
@@ -96,12 +97,11 @@ const styles = StyleSheet.create({
     fontSize: 10,
     textAlign: "right",
   },
-  // CORREÇÃO: Alinhamento do placeholder à direita
   placeholderText: {
     fontFamily: "Courier",
     fontSize: 10,
-    textAlign: "right",
-    color: "#888888",
+    textAlign: "right", // Alinhamento corrigido
+    color: "#6a737d", // Cor ajustada para melhor contraste
   },
   posText: {
     fontSize: 12,
@@ -120,98 +120,121 @@ const styles = StyleSheet.create({
 const RelatorioGruposDocument = ({ grupos, rounds, apiUrl }) => {
   const displayRounds = Array.from({ length: 6 }, (_, i) => i + 1);
 
+  // --- LÓGICA DE CÁLCULO DE ALTURA DINÂMICA ---
+  const PAGE_PADDING = 60; // 30 em cima + 30 embaixo
+  const HEADER_HEIGHT = 85;
+  const GROUP_TITLE_HEIGHT = 40;
+  const TABLE_HEADER_HEIGHT = 35;
+  const ROW_HEIGHT = 45; // Altura estimada por linha
+
+  const calculatePageHeight = (teamCount) => {
+    return (
+      PAGE_PADDING +
+      HEADER_HEIGHT +
+      GROUP_TITLE_HEIGHT +
+      TABLE_HEADER_HEIGHT +
+      teamCount * ROW_HEIGHT
+    );
+  };
+
   return (
     <Document title="Classificação da Fase de Grupos">
       {Object.keys(grupos)
         .sort()
-        .map((nomeGrupo) => (
-          // CORREÇÃO: Removido o 'size="A4"' para a página ter altura dinâmica
-          <Page key={nomeGrupo} style={styles.page}>
-            <View style={styles.header}>
-              <Text style={styles.headerText}>Libertadores do Cartola</Text>
-            </View>
-            <Text style={styles.groupTitle}>
-              {nomeGrupo !== "Sem Grupo"
-                ? `Grupo ${nomeGrupo}`
-                : "Times Sem Grupo"}
-            </Text>
-            <View style={styles.table} wrap={false}>
-              <View style={[styles.tableRow, styles.tableHeader]}>
-                <View style={[styles.tableCell, styles.colPos]}>
-                  <Text style={styles.headerTextCell}>#</Text>
-                </View>
-                <View style={[styles.tableCell, styles.colTime]}>
-                  <Text style={styles.headerTextCell}>Time / Cartoleiro</Text>
-                </View>
-                {displayRounds.map((roundNumber) => (
-                  <View
-                    key={`header-r${roundNumber}`}
-                    style={[styles.tableCell, styles.colRodada]}
-                  >
-                    <Text style={styles.headerTextCell}>R{roundNumber}</Text>
-                  </View>
-                ))}
-                <View style={[styles.tableCell, styles.colTotal]}>
-                  <Text style={styles.headerTextCell}>Total</Text>
-                </View>
-              </View>
+        .map((nomeGrupo) => {
+          const teamsInGroup = grupos[nomeGrupo];
+          const pageHeight = calculatePageHeight(teamsInGroup.length);
 
-              {grupos[nomeGrupo]
-                .sort((a, b) => (b.total || 0) - (a.total || 0))
-                .map((time, index) => (
-                  <View key={time.id} style={styles.tableRow}>
-                    <View style={[styles.tableCell, styles.colPos]}>
-                      <Text style={styles.posText}>{index + 1}</Text>
+          return (
+            // A MÁGICA ESTÁ AQUI: O tamanho da página é calculado dinamicamente
+            <Page
+              key={nomeGrupo}
+              style={styles.page}
+              size={{ width: 595, height: pageHeight }}
+            >
+              <View style={styles.header}>
+                <Text style={styles.headerText}>Libertadores do Cartola</Text>
+              </View>
+              <Text style={styles.groupTitle}>
+                {nomeGrupo !== "Sem Grupo"
+                  ? `Grupo ${nomeGrupo}`
+                  : "Times Sem Grupo"}
+              </Text>
+              <View style={styles.table} wrap={false}>
+                <View style={[styles.tableRow, styles.tableHeader]}>
+                  <View style={[styles.tableCell, styles.colPos]}>
+                    <Text style={styles.headerTextCell}>#</Text>
+                  </View>
+                  <View style={[styles.tableCell, styles.colTime]}>
+                    <Text style={styles.headerTextCell}>Time / Cartoleiro</Text>
+                  </View>
+                  {displayRounds.map((roundNumber) => (
+                    <View
+                      key={`header-r${roundNumber}`}
+                      style={[styles.tableCell, styles.colRodada]}
+                    >
+                      <Text style={styles.headerTextCell}>R{roundNumber}</Text>
                     </View>
-                    <View style={[styles.tableCell, styles.colTime]}>
-                      <View style={styles.teamCellContainer}>
-                        <Image
-                          style={styles.escudo}
-                          src={`${apiUrl}/api/image-proxy?url=${encodeURIComponent(
-                            time.url_escudo
-                          )}`}
-                        />
-                        <View style={styles.teamInfo}>
-                          <Text style={styles.teamName}>{time.nome}</Text>
-                          <Text style={styles.cartolaName}>
-                            {time.nome_cartola}
-                          </Text>
+                  ))}
+                  <View style={[styles.tableCell, styles.colTotal]}>
+                    <Text style={styles.headerTextCell}>Total</Text>
+                  </View>
+                </View>
+
+                {teamsInGroup
+                  .sort((a, b) => (b.total || 0) - (a.total || 0))
+                  .map((time, index) => (
+                    <View key={time.id} style={styles.tableRow}>
+                      <View style={[styles.tableCell, styles.colPos]}>
+                        <Text style={styles.posText}>{index + 1}</Text>
+                      </View>
+                      <View style={[styles.tableCell, styles.colTime]}>
+                        <View style={styles.teamCellContainer}>
+                          <Image
+                            style={styles.escudo}
+                            src={`${apiUrl}/api/image-proxy?url=${encodeURIComponent(
+                              time.url_escudo
+                            )}`}
+                          />
+                          <View style={styles.teamInfo}>
+                            <Text style={styles.teamName}>{time.nome}</Text>
+                            <Text style={styles.cartolaName}>
+                              {time.nome_cartola}
+                            </Text>
+                          </View>
                         </View>
                       </View>
+                      {displayRounds.map((roundIndex) => {
+                        const cartolaRoundNumber = rounds[roundIndex - 1];
+                        const score = cartolaRoundNumber
+                          ? time.pontuacoes?.[`rodada_${cartolaRoundNumber}`]
+                          : null;
+                        return (
+                          <View
+                            key={`score-${time.id}-r${roundIndex}`}
+                            style={[styles.tableCell, styles.colRodada]}
+                          >
+                            {typeof score === "number" ? (
+                              <Text style={styles.scoreText}>
+                                {score.toFixed(2)}
+                              </Text>
+                            ) : (
+                              <Text style={styles.placeholderText}> - </Text>
+                            )}
+                          </View>
+                        );
+                      })}
+                      <View style={[styles.tableCell, styles.colTotal]}>
+                        <Text style={styles.totalScoreText}>
+                          {(time.total || 0).toFixed(2)}
+                        </Text>
+                      </View>
                     </View>
-
-                    {displayRounds.map((roundIndex) => {
-                      const cartolaRoundNumber = rounds[roundIndex - 1];
-                      const score = cartolaRoundNumber
-                        ? time.pontuacoes?.[`rodada_${cartolaRoundNumber}`]
-                        : null;
-
-                      return (
-                        <View
-                          key={`score-${time.id}-r${roundIndex}`}
-                          style={[styles.tableCell, styles.colRodada]}
-                        >
-                          {typeof score === "number" ? (
-                            <Text style={styles.scoreText}>
-                              {score.toFixed(2)}
-                            </Text>
-                          ) : (
-                            <Text style={styles.placeholderText}>-</Text>
-                          )}
-                        </View>
-                      );
-                    })}
-
-                    <View style={[styles.tableCell, styles.colTotal]}>
-                      <Text style={styles.totalScoreText}>
-                        {(time.total || 0).toFixed(2)}
-                      </Text>
-                    </View>
-                  </View>
-                ))}
-            </View>
-          </Page>
-        ))}
+                  ))}
+              </View>
+            </Page>
+          );
+        })}
     </Document>
   );
 };
