@@ -1,4 +1,3 @@
-// src/components/pdf/RelatorioSorteioDocument.js
 import React from "react";
 import {
   Page,
@@ -10,6 +9,7 @@ import {
   Image,
 } from "@react-pdf/renderer";
 
+// --- FONTES ---
 Font.register({
   family: "Exo 2",
   fonts: [
@@ -18,6 +18,7 @@ Font.register({
   ],
 });
 
+// --- ESTILOS ---
 const styles = StyleSheet.create({
   page: {
     fontFamily: "Exo 2",
@@ -27,6 +28,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
+    alignContent: "flex-start",
   },
   header: {
     width: "100%",
@@ -38,16 +40,16 @@ const styles = StyleSheet.create({
   },
   headerText: { color: "#00E5FF", fontSize: 24, fontWeight: "bold" },
   groupContainer: {
-    width: "48%",
+    width: "48%", // Usar 48% para dar um pequeno espaço entre as colunas
     backgroundColor: "#2C2C44",
     borderRadius: 5,
-    padding: 10,
+    padding: 12,
     marginBottom: 15,
     borderWidth: 1,
-    borderColor: "#00E5FF",
+    borderColor: "rgba(0, 229, 255, 0.5)",
   },
   groupTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "bold",
     color: "#FFFFFF",
     marginBottom: 10,
@@ -55,7 +57,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "gray",
   },
-  teamContainer: {
+  teamRow: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 8,
@@ -77,6 +79,7 @@ const styles = StyleSheet.create({
   },
 });
 
+// --- COMPONENTE DO DOCUMENTO ---
 const RelatorioSorteioDocument = ({ groups, apiUrl }) => (
   <Document title="Resultado do Sorteio dos Grupos">
     <Page size="A4" style={styles.page}>
@@ -90,7 +93,7 @@ const RelatorioSorteioDocument = ({ groups, apiUrl }) => (
           <View key={groupName} style={styles.groupContainer}>
             <Text style={styles.groupTitle}>Grupo {groupName}</Text>
             {groups[groupName].map((team) => (
-              <View key={team.id} style={styles.teamContainer}>
+              <View key={team.id} style={styles.teamRow}>
                 <Image
                   style={styles.escudo}
                   src={`${apiUrl}/api/image-proxy?url=${encodeURIComponent(

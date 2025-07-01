@@ -11,7 +11,6 @@ import {
   CircularProgress,
   Alert,
   Snackbar,
-  Chip,
   Dialog,
   DialogContent,
   DialogTitle,
@@ -28,10 +27,10 @@ import SaveIcon from "@mui/icons-material/Save";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import CloseIcon from "@mui/icons-material/Close";
-import DownloadIcon from "@mui/icons-material/Download";
+import DownloadIcon from "@mui/icons-material/Download"; // Importação do Ícone
 import { pdf } from "@react-pdf/renderer";
 import { savePdf } from "../utils/download";
-import RelatorioSorteioDocument from "../components/pdf/RelatorioSorteioDocument";
+import RelatorioSorteioDocument from "../components/pdf/RelatorioSorteioDocument"; // Importação do novo componente
 
 // Efeito de transição para os Dialogs
 const Transition = React.forwardRef(function Transition(props, ref) {
@@ -100,11 +99,11 @@ function SorteioPage() {
   const [groups, setGroups] = useState({});
   const [lastDrawnTeam, setLastDrawnTeam] = useState(null);
   const [drawDialogOpen, setDrawDialogOpen] = useState(false);
-  const [potDialogOpen, setPotDialogOpen] = useState(false); // Novo estado para o dialog do pote
+  const [potDialogOpen, setPotDialogOpen] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false); // Estado para o PDF
   const [feedback, setFeedback] = useState({
     open: false,
     message: "",
@@ -113,6 +112,9 @@ function SorteioPage() {
 
   const GROUP_NAMES = ["A", "B", "C", "D", "E", "F", "G", "H"];
   const TEAMS_PER_GROUP = 4;
+
+  const showFeedback = (type, message) =>
+    setFeedback({ open: true, type, message });
 
   const initializeDraw = useCallback((teams) => {
     const initialGroups = GROUP_NAMES.reduce(
@@ -133,20 +135,15 @@ function SorteioPage() {
           (team) => !team.group || team.group === "Sem Grupo"
         );
         if (teamsWithoutGroup.length !== 32) {
-          setFeedback({
-            open: true,
-            message: `Atenção: Encontrados ${teamsWithoutGroup.length}/32 times sem grupo para o sorteio.`,
-            type: "warning",
-          });
+          showFeedback(
+            "warning",
+            `Atenção: Encontrados ${teamsWithoutGroup.length}/32 times sem grupo para o sorteio.`
+          );
         }
         setAllTeams(teamsWithoutGroup);
         initializeDraw(teamsWithoutGroup);
       } catch (err) {
-        setFeedback({
-          open: true,
-          message: "Erro ao carregar times.",
-          type: "error",
-        });
+        showFeedback("error", "Erro ao carregar times.");
       } finally {
         setIsLoading(false);
       }
@@ -168,7 +165,7 @@ function SorteioPage() {
       setDrawDialogOpen(false);
       placeTeamInGroup(drawnTeam);
       setTeamsToDraw(remainingTeams);
-    }, 2000);
+    }, 1000); // Duração do dialog alterada para 2 segundos
   };
 
   const placeTeamInGroup = (drawnTeam) => {
@@ -187,11 +184,7 @@ function SorteioPage() {
     }));
 
     if (teamsToDraw.length === 1) {
-      setFeedback({
-        open: true,
-        message: "Sorteio concluído!",
-        type: "success",
-      });
+      showFeedback("success", "Sorteio concluído!");
     }
 
     setIsDrawing(false);
@@ -199,7 +192,7 @@ function SorteioPage() {
 
   const handleSaveGroups = async () => {
     setIsSaving(true);
-    setFeedback({ open: true, message: "Salvando grupos...", type: "info" });
+    showFeedback("info", "Salvando grupos...");
     try {
       const groupAssignments = Object.entries(groups).flatMap(
         ([groupName, teams]) =>
@@ -211,17 +204,12 @@ function SorteioPage() {
         );
       }
       await api.post("/teams/assign-groups", { assignments: groupAssignments });
-      setFeedback({
-        open: true,
-        message: "Grupos salvos com sucesso!",
-        type: "success",
-      });
+      showFeedback("success", "Grupos salvos com sucesso!");
     } catch (err) {
-      setFeedback({
-        open: true,
-        message: err.response?.data?.message || "Erro ao salvar os grupos.",
-        type: "error",
-      });
+      showFeedback(
+        "error",
+        err.response?.data?.message || "Erro ao salvar os grupos."
+      );
     } finally {
       setIsSaving(false);
     }
@@ -229,11 +217,10 @@ function SorteioPage() {
 
   const handleExportPdf = async () => {
     if (teamsToDraw.length > 0) {
-      setFeedback({
-        open: true,
-        message: "Conclua o sorteio para exportar o resultado.",
-        type: "warning",
-      });
+      showFeedback(
+        "warning",
+        "Conclua o sorteio para exportar o resultado."
+      );
       return;
     }
     setIsGeneratingPdf(true);
@@ -243,16 +230,10 @@ function SorteioPage() {
         <RelatorioSorteioDocument groups={groups} apiUrl={API_BASE_URL} />
       );
       const blob = await pdf(doc).toBlob();
-      await savePdf(blob, "resultado-sorteio-grupos.pdf", (type, message) =>
-        setFeedback({ open: true, type, message })
-      );
+      await savePdf(blob, "resultado-sorteio-grupos.pdf", showFeedback);
     } catch (e) {
       console.error("Erro ao gerar PDF do sorteio:", e);
-      setFeedback({
-        open: true,
-        message: "Ocorreu um erro ao gerar o PDF.",
-        type: "error",
-      });
+      showFeedback("error", "Ocorreu um erro ao gerar o PDF.");
     } finally {
       setIsGeneratingPdf(false);
     }
@@ -309,12 +290,15 @@ function SorteioPage() {
               >
                 {isSaving ? "Salvando..." : "Salvar Grupos"}
               </Button>
+              {/* BOTÃO DE EXPORTAR PDF */}
               <Button
                 fullWidth
                 variant="contained"
                 color="success"
                 onClick={handleExportPdf}
-                disabled={isDrawing || isGeneratingPdf || teamsToDraw.length > 0}
+                disabled={
+                  isDrawing || isGeneratingPdf || teamsToDraw.length > 0
+                }
                 startIcon={
                   isGeneratingPdf ? (
                     <CircularProgress size={20} />
@@ -347,8 +331,8 @@ function SorteioPage() {
             </Box>
             {teamsToDraw.length === 0 && !isDrawing && (
               <Alert severity="success" sx={{ mt: 2 }}>
-                Sorteio finalizado! Clique em "Salvar Grupos" para confirmar ou
-                em "Exportar Resultado" para gerar o PDF.
+                Sorteio finalizado! Clique em "Salvar Grupos" ou "Exportar
+                Resultado".
               </Alert>
             )}
           </Paper>
@@ -449,13 +433,13 @@ function SorteioPage() {
       {/* Snackbar para Feedbacks */}
       <Snackbar
         open={feedback.open}
-        autoHideDuration={1500}
+        autoHideDuration={6000}
         onClose={() => setFeedback({ ...feedback, open: false })}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
         <Alert
           onClose={() => setFeedback({ ...feedback, open: false })}
-          severity={feedback.type}
+          severity={feedback.type || "info"}
           sx={{ width: "100%" }}
         >
           {feedback.message}
