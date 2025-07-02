@@ -26,7 +26,7 @@ const styles = StyleSheet.create({
   },
   header: {
     textAlign: "center",
-    marginBottom: 20,
+    marginBottom: 30, // Aumentando a margem inferior do cabeçalho
     borderBottomWidth: 1.5,
     borderBottomColor: "#00E5FF",
     paddingBottom: 15,
@@ -40,9 +40,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     color: "#FFFFFF",
-    marginBottom: 25,
-    marginTop: 5,
-    paddingBottom: 5,
+    marginBottom: 20, // Aumentando o espaçamento abaixo do título da rodada
+    marginTop: 30, // Aumentando o espaçamento acima do título da rodada
+    paddingBottom: 8,
     borderBottomWidth: 1,
     borderBottomColor: "gray",
   },
@@ -52,49 +52,51 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     backgroundColor: "#2C2C44",
     borderRadius: 5,
-    padding: 12,
-    marginBottom: 10,
+    padding: 15, // Aumentando o padding interno do container da partida
+    marginBottom: 12, // Aumentando a margem inferior entre as partidas
     borderLeftWidth: 4,
     borderLeftColor: "#00E5FF",
+    position: "relative", // Adicionado para posicionar o chip do grupo
   },
   teamCell: {
     flexDirection: "row",
     alignItems: "center",
     flex: 1,
+    padding: "5px 0", // Adicionando um pequeno padding vertical para os times
   },
   escudo: {
-    width: 28,
-    height: 28,
-    marginRight: 10,
+    width: 36, // Aumentando um pouco o tamanho do escudo
+    height: 36, // Aumentando um pouco o tamanho do escudo
+    marginRight: 12,
   },
   teamInfo: {
     flexDirection: "column",
   },
   teamName: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: "bold",
   },
   cartolaName: {
-    fontSize: 9,
+    fontSize: 10,
     color: "#B0B0C0",
-    marginTop: 2,
+    marginTop: 3,
   },
   vsText: {
-    fontSize: 14,
+    fontSize: 16,
     fontFamily: "Exo 2",
     color: "#00E5FF",
-    marginHorizontal: 15,
+    marginHorizontal: 18,
     fontWeight: "bold",
   },
   groupChip: {
     position: "absolute",
-    top: -8,
+    top: -10, // Ajustando a posição vertical do chip
     left: 10,
     backgroundColor: "#1A1A2E",
     color: "#B0B0C0",
-    padding: "2px 6px",
-    borderRadius: 4,
-    fontSize: 5,
+    padding: "3px 7px",
+    borderRadius: 5,
+    fontSize: 10,
     fontWeight: "bold",
   },
 });
@@ -110,7 +112,7 @@ const RelatorioConfrontosSimplesDocument = ({ matchesByRound, apiUrl }) => (
     <Page size="A4" style={styles.page}>
       <View style={styles.header}>
         <Text style={styles.headerText}>Libertadores do Cartola</Text>
-        <Text style={{ ...styles.headerText, fontSize: 18, marginTop: 4 }}>
+        <Text style={{ ...styles.headerText, fontSize: 18, marginTop: 6 }}>
           Confrontos da Fase de Grupos
         </Text>
       </View>
@@ -118,11 +120,11 @@ const RelatorioConfrontosSimplesDocument = ({ matchesByRound, apiUrl }) => (
       {Object.keys(matchesByRound)
         .sort()
         .map((roundName) => (
-          <View key={roundName} wrap={false} style={{ position: "relative" }}>
+          <View key={roundName} wrap={false}>
             <Text style={styles.roundTitle}>{roundName}</Text>
-            {matchesByRound[roundName]
-              .sort((a, b) => a.group.localeCompare(b.group))
-              .map((match) => (
+            {matchesByRound?.[roundName]
+              ?.sort((a, b) => a.group.localeCompare(b.group))
+              ?.map((match) => (
                 <View key={match.id} style={styles.matchContainer}>
                   <Text style={styles.groupChip}>Grupo {match.group}</Text>
                   <View
@@ -163,7 +165,7 @@ const RelatorioConfrontosSimplesDocument = ({ matchesByRound, apiUrl }) => (
                     <Image
                       style={[
                         styles.escudo,
-                        { marginRight: 0, marginLeft: 10 },
+                        { marginRight: 0, marginLeft: 12 },
                       ]}
                       src={`${apiUrl}/api/image-proxy?url=${encodeURIComponent(
                         match.away_team.url_escudo
