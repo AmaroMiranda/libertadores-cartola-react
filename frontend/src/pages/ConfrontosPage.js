@@ -16,16 +16,21 @@ import {
   Snackbar,
 } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
+import ShareIcon from "@mui/icons-material/Share";
 import MatchCard from "../components/MatchCard";
 import { pdf } from "@react-pdf/renderer";
 import { savePdf } from "../utils/download";
 import RelatorioConfrontosDocument from "../components/pdf/RelatorioConfrontosDocument";
+// Import the new simple report component
+import RelatorioConfrontosSimplesDocument from "../components/pdf/RelatorioConfrontosSimplesDocument";
 
 function ConfrontosPage() {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  // New state for the simple report
+  const [isGeneratingSimplePdf, setIsGeneratingSimplePdf] = useState(false);
   const [selectedRound, setSelectedRound] = useState("all");
   const [feedback, setFeedback] = useState({
     open: false,
@@ -96,6 +101,40 @@ function ConfrontosPage() {
     }
   };
 
+  // New handler for the simple report
+  const handleGenerateSimplePdf = async () => {
+    if (selectedRound === "" || !matchesByRound) return;
+    setIsGeneratingSimplePdf(true);
+
+    try {
+      let dataForPdf = matchesByRound;
+      let fileName = "relatorio-confrontos-simples-todos.pdf";
+
+      if (selectedRound !== "all") {
+        dataForPdf = { [selectedRound]: matchesByRound[selectedRound] };
+        const roundNumber =
+          matchesByRound[selectedRound][0]?.league_round || "rodada";
+        fileName = `relatorio-confrontos-simples-rodada-${roundNumber}.pdf`;
+      }
+
+      const API_BASE_URL = api.defaults.baseURL.replace("/api", "");
+
+      const doc = (
+        <RelatorioConfrontosSimplesDocument
+          matchesByRound={dataForPdf}
+          apiUrl={API_BASE_URL}
+        />
+      );
+      const blob = await pdf(doc).toBlob();
+      await savePdf(blob, fileName, showFeedback);
+    } catch (e) {
+      console.error("Erro ao gerar PDF simples dos confrontos:", e);
+      showFeedback("error", "Ocorreu um erro ao gerar o PDF simplificado.");
+    } finally {
+      setIsGeneratingSimplePdf(false);
+    }
+  };
+
   const podeGerarPdf = !loading && !error && matches.length > 0;
   const roundKeys = Object.keys(matchesByRound).sort();
 
@@ -116,12 +155,19 @@ function ConfrontosPage() {
         </Typography>
 
         {podeGerarPdf && (
-          <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+          <Box
+            sx={{
+              display: "flex",
+              gap: 2,
+              alignItems: "center",
+              flexWrap: "wrap",
+            }}
+          >
             <FormControl sx={{ minWidth: 200 }} size="small">
-              <InputLabel>Exportar Rodada</InputLabel>
+              <InputLabel>Filtrar por Rodada</InputLabel>
               <Select
                 value={selectedRound}
-                label="Exportar Rodada"
+                label="Filtrar por Rodada"
                 onChange={(e) => setSelectedRound(e.target.value)}
               >
                 <MenuItem value="all">
@@ -137,7 +183,7 @@ function ConfrontosPage() {
             <Button
               variant="contained"
               onClick={handleGeneratePdf}
-              disabled={isGeneratingPdf}
+              disabled={isGeneratingPdf || isGeneratingSimplePdf}
               startIcon={
                 isGeneratingPdf ? (
                   <CircularProgress size={20} color="inherit" />
@@ -146,7 +192,23 @@ function ConfrontosPage() {
                 )
               }
             >
-              {isGeneratingPdf ? "Gerando..." : "Exportar"}
+              {isGeneratingPdf ? "Gerando..." : "Exportar Completo"}
+            </Button>
+            {/* New button for the simple report */}
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={handleGenerateSimplePdf}
+              disabled={isGeneratingSimplePdf || isGeneratingPdf}
+              startIcon={
+                isGeneratingSimplePdf ? (
+                  <CircularProgress size={20} color="inherit" />
+                ) : (
+                  <ShareIcon />
+                )
+              }
+            >
+              {isGeneratingSimplePdf ? "Gerando..." : "Exportar para Partilha"}
             </Button>
           </Box>
         )}
