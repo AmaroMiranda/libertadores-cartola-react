@@ -25,7 +25,7 @@ const truncateText = (text, maxLength) => {
   return text.slice(0, maxLength).trim() + "...";
 };
 
-// --- ESTILOS (REFEITOS PARA ESPELHAR O TEMA DO SITE) ---
+// --- ESTILOS FINAIS ---
 const styles = StyleSheet.create({
   page: {
     fontFamily: "Exo 2",
@@ -33,8 +33,9 @@ const styles = StyleSheet.create({
     color: "#EAEAEA",
     padding: 30,
   },
+  // 1. CORREÇÃO NO HEADER PARA EVITAR SOBREPOSIÇÃO
   header: {
-    textAlign: "center",
+    alignItems: "center", // Centraliza o conteúdo do header
     marginBottom: 25,
     borderBottomWidth: 1.5,
     borderBottomColor: "#00E5FF",
@@ -44,33 +45,33 @@ const styles = StyleSheet.create({
     color: "#00E5FF",
     fontSize: 24,
     fontWeight: "bold",
+    textAlign: "center", // Garante centralização
   },
   subHeaderText: {
     fontSize: 14,
     color: "#B0B0C0",
-    marginTop: 4,
+    marginTop: 6, // Adiciona margem para empurrar para baixo
+    textAlign: "center",
   },
   roundTitle: {
     fontSize: 18,
     fontWeight: "bold",
     color: "#FFFFFF",
-    marginBottom: 15,
-    marginTop: 10,
+    marginBottom: 20,
     textTransform: "uppercase",
   },
-  // Estrutura principal: Grid de 2 colunas para os confrontos
   matchesGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
   },
-  // CARD DE CONFRONTO: Agora espelha o MatchCard.js
   matchCard: {
-    width: "48%", // Ocupa quase metade da página, permitindo 2 por linha
+    width: "48%",
     backgroundColor: "#2C2C44",
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "rgba(0, 229, 255, 0.2)",
+    // 3. COR DA BORDA ATUALIZADA
+    borderWidth: 1.5,
+    borderColor: "#00E5FF", // Cor de destaque, conforme solicitado
     marginBottom: 15,
     padding: 12,
   },
@@ -84,15 +85,13 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     fontSize: 9,
     fontWeight: "bold",
-    alignSelf: "center", // Centraliza o chip
+    alignSelf: "center",
   },
-  // CONTEÚDO DO CARD: Onde os dois times são exibidos
   cardContent: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-around",
   },
-  // COLUNA VERTICAL PARA CADA TIME (Avatar, Nome, Cartoleiro)
   teamDisplayColumn: {
     width: "45%",
     flexDirection: "column",
@@ -110,7 +109,7 @@ const styles = StyleSheet.create({
   teamName: {
     fontSize: 10,
     fontWeight: "bold",
-    textAlign: "center", // Garante centralização
+    textAlign: "center",
   },
   cartolaName: {
     fontSize: 8,
@@ -125,7 +124,8 @@ const styles = StyleSheet.create({
   },
 });
 
-// --- NOVO COMPONENTE DE EXIBIÇÃO DE TIME (VERTICAL) ---
+// --- COMPONENTES AUXILIARES ---
+
 const TeamDisplayVertical = ({ team, apiUrl }) => {
   const imageSrc = team?.url_escudo
     ? `${apiUrl}/api/image-proxy?url=${encodeURIComponent(team.url_escudo)}`
@@ -142,7 +142,14 @@ const TeamDisplayVertical = ({ team, apiUrl }) => {
   );
 };
 
-// --- COMPONENTE PRINCIPAL DO DOCUMENTO (VERSÃO FINAL) ---
+const PageHeader = () => (
+  <View style={styles.header}>
+    <Text style={styles.headerText}>Libertadores do Cartola</Text>
+    <Text style={styles.subHeaderText}>Confrontos da Fase de Grupos</Text>
+  </View>
+);
+
+// --- COMPONENTE PRINCIPAL DO DOCUMENTO (COM LÓGICA DE PAGINAÇÃO) ---
 const RelatorioConfrontosSimplesDocument = ({ matchesByRound, apiUrl }) => {
   const sortedRounds = Object.keys(matchesByRound).sort(
     (a, b) =>
@@ -151,18 +158,33 @@ const RelatorioConfrontosSimplesDocument = ({ matchesByRound, apiUrl }) => {
 
   return (
     <Document title="Relatório de Confrontos Simplificado">
-      <Page size="A4" style={styles.page}>
-        <View style={styles.header}>
-          <Text style={styles.headerText}>Libertadores do Cartola</Text>
-          <Text style={styles.subHeaderText}>Confrontos da Fase de Grupos</Text>
-        </View>
+      {sortedRounds.map((roundName) => {
+        const matchesInRound = matchesByRound[roundName];
+        const groupsByName = matchesInRound.reduce((acc, match) => {
+          (acc[match.group] = acc[match.group] || []).push(match);
+          return acc;
+        }, {});
+        const sortedGroupNames = Object.keys(groupsByName).sort();
 
-        {sortedRounds.map((roundName) => (
-          <View key={roundName} wrap={false}>
+        // 2. LÓGICA DE PAGINAÇÃO: Divide os grupos em "pedaços" de 4
+        const groupsPerPage = 4;
+        const groupChunks = [];
+        for (let i = 0; i < sortedGroupNames.length; i += groupsPerPage) {
+          groupChunks.push(sortedGroupNames.slice(i, i + groupsPerPage));
+        }
+
+        // Gera uma <Page> para cada "pedaço" de grupos
+        return groupChunks.map((pageGroupNames, pageIndex) => (
+          <Page
+            key={`${roundName}-page-${pageIndex}`}
+            size="A4"
+            style={styles.page}
+          >
+            <PageHeader />
             <Text style={styles.roundTitle}>{roundName}</Text>
             <View style={styles.matchesGrid}>
-              {matchesByRound[roundName]
-                .sort((a, b) => a.group.localeCompare(b.group))
+              {pageGroupNames
+                .flatMap((groupName) => groupsByName[groupName])
                 .map((match) => (
                   <View key={match.id} style={styles.matchCard}>
                     <Text style={styles.groupChip}>GRUPO {match.group}</Text>
@@ -180,9 +202,9 @@ const RelatorioConfrontosSimplesDocument = ({ matchesByRound, apiUrl }) => {
                   </View>
                 ))}
             </View>
-          </View>
-        ))}
-      </Page>
+          </Page>
+        ));
+      })}
     </Document>
   );
 };
