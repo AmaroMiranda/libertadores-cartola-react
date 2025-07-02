@@ -25,17 +25,17 @@ const truncateText = (text, maxLength) => {
   return text.slice(0, maxLength).trim() + "...";
 };
 
-// --- ESTILOS (REFEITOS COM FOCO EM ROBUSTEZ MÁXIMA) ---
+// --- ESTILOS (REFEITOS PARA ESPELHAR O TEMA DO SITE) ---
 const styles = StyleSheet.create({
   page: {
     fontFamily: "Exo 2",
     backgroundColor: "#1A1A2E",
     color: "#EAEAEA",
-    padding: 25,
+    padding: 30,
   },
   header: {
     textAlign: "center",
-    marginBottom: 20,
+    marginBottom: 25,
     borderBottomWidth: 1.5,
     borderBottomColor: "#00E5FF",
     paddingBottom: 15,
@@ -50,111 +50,100 @@ const styles = StyleSheet.create({
     color: "#B0B0C0",
     marginTop: 4,
   },
-  // Container para uma rodada inteira
-  roundSection: {
-    marginBottom: 20,
-  },
   roundTitle: {
     fontSize: 18,
     fontWeight: "bold",
     color: "#FFFFFF",
     marginBottom: 15,
-  },
-  // A grande mudança: Um container para cada grupo de confrontos
-  groupSection: {
-    backgroundColor: "#2C2C44",
-    borderRadius: 8,
-    padding: 15,
-    marginBottom: 15,
-    borderWidth: 1,
-    borderColor: "rgba(0, 229, 255, 0.2)",
-  },
-  groupTitle: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#00E5FF",
-    paddingBottom: 8,
-    marginBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(255, 255, 255, 0.1)",
+    marginTop: 10,
     textTransform: "uppercase",
   },
-  // Linha de cada confronto
-  matchRow: {
+  // Estrutura principal: Grid de 2 colunas para os confrontos
+  matchesGrid: {
     flexDirection: "row",
-    alignItems: "center",
+    flexWrap: "wrap",
     justifyContent: "space-between",
-    paddingVertical: 8, // Espaço vertical entre as partidas
   },
-  // Colunas com LARGURA FIXA para garantir o layout
-  teamColumn: {
-    width: "45%", // Fixo
+  // CARD DE CONFRONTO: Agora espelha o MatchCard.js
+  matchCard: {
+    width: "48%", // Ocupa quase metade da página, permitindo 2 por linha
+    backgroundColor: "#2C2C44",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "rgba(0, 229, 255, 0.2)",
+    marginBottom: 15,
+    padding: 12,
+  },
+  groupChip: {
+    textAlign: "center",
+    marginBottom: 10,
+    color: "#00E5FF",
+    backgroundColor: "rgba(0, 229, 255, 0.1)",
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderRadius: 10,
+    fontSize: 9,
+    fontWeight: "bold",
+    alignSelf: "center", // Centraliza o chip
+  },
+  // CONTEÚDO DO CARD: Onde os dois times são exibidos
+  cardContent: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-around",
   },
-  vsColumn: {
-    width: "10%", // Fixo
+  // COLUNA VERTICAL PARA CADA TIME (Avatar, Nome, Cartoleiro)
+  teamDisplayColumn: {
+    width: "45%",
+    flexDirection: "column",
+    alignItems: "center",
+    textAlign: "center",
+  },
+  escudo: {
+    width: 48,
+    height: 48,
+    marginBottom: 8,
+    backgroundColor: "rgba(255,255,255,0.1)",
+    padding: 2,
+    borderRadius: 5,
+  },
+  teamName: {
+    fontSize: 10,
+    fontWeight: "bold",
+    textAlign: "center", // Garante centralização
+  },
+  cartolaName: {
+    fontSize: 8,
+    color: "#B0B0C0",
+    marginTop: 2,
     textAlign: "center",
   },
   vsText: {
-    fontSize: 12,
-    fontWeight: "bold",
+    fontSize: 10,
     color: "gray",
-  },
-  escudo: {
-    width: 28,
-    height: 28,
-    borderRadius: 4,
-  },
-  teamInfo: {
-    flexDirection: "column",
-  },
-  teamName: {
-    fontSize: 11,
     fontWeight: "bold",
-  },
-  cartolaName: {
-    fontSize: 9,
-    color: "#B0B0C0",
-    marginTop: 2,
   },
 });
 
-// --- COMPONENTE TEAMDISPLAY (SIMPLIFICADO) ---
-const TeamDisplay = ({ team, direction = "left", apiUrl }) => {
-  // Garantir que a URL da imagem existe antes de tentar usá-la
+// --- NOVO COMPONENTE DE EXIBIÇÃO DE TIME (VERTICAL) ---
+const TeamDisplayVertical = ({ team, apiUrl }) => {
   const imageSrc = team?.url_escudo
     ? `${apiUrl}/api/image-proxy?url=${encodeURIComponent(team.url_escudo)}`
     : null;
 
-  const isLeft = direction === "left";
-  // Estilos condicionais para alinhamento
-  const columnStyle = isLeft
-    ? { justifyContent: "flex-start" }
-    : { justifyContent: "flex-end", flexDirection: "row-reverse" };
-  const marginStyle = isLeft ? { marginRight: 10 } : { marginLeft: 10 };
-  const textStyle = isLeft ? { textAlign: "left" } : { textAlign: "right" };
-
   return (
-    <View style={[styles.teamColumn, columnStyle]}>
-      {imageSrc && (
-        <Image style={[styles.escudo, marginStyle]} src={imageSrc} />
-      )}
-      <View style={styles.teamInfo}>
-        <Text style={[styles.teamName, textStyle]}>
-          {truncateText(team?.nome, 20)}
-        </Text>
-        <Text style={[styles.cartolaName, textStyle]}>
-          {truncateText(team?.nome_cartola, 22)}
-        </Text>
-      </View>
+    <View style={styles.teamDisplayColumn}>
+      {imageSrc && <Image style={styles.escudo} src={imageSrc} />}
+      <Text style={styles.teamName}>{truncateText(team?.nome, 20)}</Text>
+      <Text style={styles.cartolaName}>
+        {truncateText(team?.nome_cartola, 22)}
+      </Text>
     </View>
   );
 };
 
-// --- COMPONENTE PRINCIPAL DO DOCUMENTO (REESTRUTURADO) ---
+// --- COMPONENTE PRINCIPAL DO DOCUMENTO (VERSÃO FINAL) ---
 const RelatorioConfrontosSimplesDocument = ({ matchesByRound, apiUrl }) => {
-  // Ordena as chaves das rodadas numericamente (ex: "Rodada 1", "Rodada 2", ...)
   const sortedRounds = Object.keys(matchesByRound).sort(
     (a, b) =>
       parseInt(a.replace(/\D/g, ""), 10) - parseInt(b.replace(/\D/g, ""), 10)
@@ -168,52 +157,31 @@ const RelatorioConfrontosSimplesDocument = ({ matchesByRound, apiUrl }) => {
           <Text style={styles.subHeaderText}>Confrontos da Fase de Grupos</Text>
         </View>
 
-        {/* Itera sobre cada rodada */}
-        {sortedRounds.map((roundName) => {
-          // Agrupa os confrontos da rodada atual pelo nome do grupo
-          const matchesByGroup = matchesByRound[roundName].reduce(
-            (acc, match) => {
-              (acc[match.group] = acc[match.group] || []).push(match);
-              return acc;
-            },
-            {}
-          );
-
-          // Ordena os nomes dos grupos (A, B, C, ...)
-          const sortedGroups = Object.keys(matchesByGroup).sort();
-
-          return (
-            <View key={roundName} style={styles.roundSection} wrap={false}>
-              <Text style={styles.roundTitle}>{roundName}</Text>
-
-              {/* Itera sobre cada grupo (A, B, C...) dentro da rodada */}
-              {sortedGroups.map((groupName) => (
-                <View key={groupName} style={styles.groupSection}>
-                  <Text style={styles.groupTitle}>Grupo {groupName}</Text>
-
-                  {/* Itera sobre cada confronto dentro do grupo */}
-                  {matchesByGroup[groupName].map((match) => (
-                    <View key={match.id} style={styles.matchRow}>
-                      <TeamDisplay
+        {sortedRounds.map((roundName) => (
+          <View key={roundName} wrap={false}>
+            <Text style={styles.roundTitle}>{roundName}</Text>
+            <View style={styles.matchesGrid}>
+              {matchesByRound[roundName]
+                .sort((a, b) => a.group.localeCompare(b.group))
+                .map((match) => (
+                  <View key={match.id} style={styles.matchCard}>
+                    <Text style={styles.groupChip}>GRUPO {match.group}</Text>
+                    <View style={styles.cardContent}>
+                      <TeamDisplayVertical
                         team={match.home_team}
-                        direction="left"
                         apiUrl={apiUrl}
                       />
-                      <View style={styles.vsColumn}>
-                        <Text style={styles.vsText}>VS</Text>
-                      </View>
-                      <TeamDisplay
+                      <Text style={styles.vsText}>VS</Text>
+                      <TeamDisplayVertical
                         team={match.away_team}
-                        direction="right"
                         apiUrl={apiUrl}
                       />
                     </View>
-                  ))}
-                </View>
-              ))}
+                  </View>
+                ))}
             </View>
-          );
-        })}
+          </View>
+        ))}
       </Page>
     </Document>
   );
