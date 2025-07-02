@@ -62,7 +62,7 @@ function ConfrontosPage() {
 
   const matchesByRound = useMemo(() => {
     return matches.reduce((acc, match) => {
-      const roundTitle = `Rodada ${match.league_round} (Cartola R${match.cartola_round})`;
+      const roundTitle = `Rodada ${match.league_round}`;
       (acc[roundTitle] = acc[roundTitle] || []).push(match);
       return acc;
     }, {});
@@ -208,7 +208,7 @@ function ConfrontosPage() {
                 )
               }
             >
-              {isGeneratingSimplePdf ? "Gerando..." : "Exportar para Partilha"}
+              {isGeneratingSimplePdf ? "Gerando..." : "Exportar Confrontos"}
             </Button>
           </Box>
         )}

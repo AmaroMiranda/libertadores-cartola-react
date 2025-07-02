@@ -41,7 +41,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#FFFFFF",
     marginBottom: 15,
-    marginTop: 20,
+    marginTop: 10,
     paddingBottom: 5,
     borderBottomWidth: 1,
     borderBottomColor: "gray",
@@ -63,8 +63,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   escudo: {
-    width: 32,
-    height: 32,
+    width: 28,
+    height: 28,
     marginRight: 10,
   },
   teamInfo: {
