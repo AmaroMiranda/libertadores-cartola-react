@@ -14,6 +14,7 @@ import {
   Select,
   MenuItem,
   Snackbar,
+  TextField, // Importar o TextField
 } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
 import ShareIcon from "@mui/icons-material/Share";
@@ -30,6 +31,7 @@ function ConfrontosPage() {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [isGeneratingSimplePdf, setIsGeneratingSimplePdf] = useState(false);
   const [selectedRound, setSelectedRound] = useState("all");
+  const [searchTerm, setSearchTerm] = useState(""); // Novo estado para a busca
   const [feedback, setFeedback] = useState({
     open: false,
     message: "",
@@ -58,14 +60,28 @@ function ConfrontosPage() {
     fetchConfrontos();
   }, []);
 
+  // Lógica de filtragem atualizada para incluir o termo de busca
   const matchesByRoundAndGroup = useMemo(() => {
-    const filteredMatches =
+    // 1. Filtra por rodada selecionada
+    let filteredMatches =
       selectedRound === "all"
         ? matches
         : matches.filter(
             (match) => `Rodada ${match.league_round}` === selectedRound
           );
 
+    // 2. Filtra adicionalmente pelo termo de busca
+    if (searchTerm.trim() !== "") {
+      const lowercasedFilter = searchTerm.toLowerCase();
+      filteredMatches = filteredMatches.filter(
+        (match) =>
+          match.home_team.nome.toLowerCase().includes(lowercasedFilter) ||
+          match.away_team.nome.toLowerCase().includes(lowercasedFilter) ||
+          match.group.toLowerCase().includes(lowercasedFilter)
+      );
+    }
+
+    // 3. Agrupa o resultado final para exibição
     return filteredMatches.reduce((acc, match) => {
       const roundTitle = `Rodada ${match.league_round}`;
       if (!acc[roundTitle]) {
@@ -77,7 +93,7 @@ function ConfrontosPage() {
       acc[roundTitle][match.group].push(match);
       return acc;
     }, {});
-  }, [matches, selectedRound]);
+  }, [matches, selectedRound, searchTerm]); // Adiciona searchTerm como dependência
 
   const handleGeneratePdf = async () => {
     const originalMatchesByRound = matches.reduce((acc, match) => {
@@ -179,7 +195,7 @@ function ConfrontosPage() {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          mb: 4,
+          mb: 2, // Ajuste de margem
           flexWrap: "wrap",
           gap: 2,
         }}
@@ -247,6 +263,18 @@ function ConfrontosPage() {
         )}
       </Box>
 
+      {/* NOVO CAMPO DE BUSCA */}
+      {podeGerarPdf && (
+        <TextField
+          label="Buscar por time ou grupo..."
+          variant="outlined"
+          fullWidth
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          sx={{ mb: 4 }}
+        />
+      )}
+
       {loading && (
         <Box display="flex" flexDirection="column" alignItems="center" my={5}>
           <CircularProgress />
@@ -261,7 +289,7 @@ function ConfrontosPage() {
         </Alert>
       )}
       {!loading && !error && (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 5, mt: 4 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 5, mt: 2 }}>
           {roundKeys.length > 0 ? (
             roundKeys.map((roundName) => (
               <Paper key={roundName} elevation={3} sx={{ overflow: "hidden" }}>
@@ -287,7 +315,7 @@ function ConfrontosPage() {
                         <Typography
                           variant="h6"
                           sx={{
-                            color: "primary.main", // Cor do rótulo alterada aqui
+                            color: "primary.main",
                             mb: 2,
                             pl: 1,
                             fontWeight: "bold",
@@ -311,8 +339,7 @@ function ConfrontosPage() {
             ))
           ) : (
             <Alert severity="info">
-              Nenhum confronto para exibir. Verifique o filtro de rodada ou se
-              há grupos e rodadas configurados no Painel de Gestão.
+              Nenhum confronto encontrado para os filtros aplicados.
             </Alert>
           )}
         </Box>
