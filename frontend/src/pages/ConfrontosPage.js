@@ -242,7 +242,7 @@ function ConfrontosPage() {
                       )
                     }
                   >
-                    Simples
+                    Confrontos
                   </Button>
                 </Box>
               </Grid>
@@ -250,12 +250,12 @@ function ConfrontosPage() {
           </Paper>
 
           <TextField
-            label="Buscar por time ou grupo..."
+            label="Buscar time"
             variant="outlined"
             fullWidth
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            sx={{ mb: 4 }}
+            sx={{ mb: 2 }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
