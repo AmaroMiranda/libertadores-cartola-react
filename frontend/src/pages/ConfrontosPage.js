@@ -31,7 +31,7 @@ function ConfrontosPage() {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [isGeneratingSimplePdf, setIsGeneratingSimplePdf] = useState(false);
   const [selectedRound, setSelectedRound] = useState("all");
-  const [searchTerm, setSearchTerm] = useState(""); // Novo estado para a busca
+  const [searchTerm, setSearchTerm] = useState("");
   const [feedback, setFeedback] = useState({
     open: false,
     message: "",
@@ -266,7 +266,7 @@ function ConfrontosPage() {
       {/* NOVO CAMPO DE BUSCA */}
       {podeGerarPdf && (
         <TextField
-          label="Buscar por time ou grupo..."
+          label="Buscar por time"
           variant="outlined"
           fullWidth
           value={searchTerm}
