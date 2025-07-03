@@ -15,9 +15,9 @@ import {
   MenuItem,
   Snackbar,
   TextField,
-  InputAdornment, // Importar
+  InputAdornment,
 } from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search"; // Importar
+import SearchIcon from "@mui/icons-material/Search";
 import DownloadIcon from "@mui/icons-material/Download";
 import ShareIcon from "@mui/icons-material/Share";
 import MatchCard from "../components/MatchCard";
@@ -180,96 +180,95 @@ function ConfrontosPage() {
 
   return (
     <Box>
-      <Typography
-        variant="h4"
-        component="h1"
-        sx={{ fontWeight: "bold", mb: 4 }}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 2,
+          mb: 4,
+        }}
       >
-        Confrontos da Fase de Grupos
-      </Typography>
+        <Typography variant="h4" component="h1" sx={{ fontWeight: "bold" }}>
+          Confrontos da Fase de Grupos
+        </Typography>
+
+        {podeGerarPdf && (
+          <Box
+            sx={{
+              display: "flex",
+              gap: 2,
+              alignItems: "center",
+              flexWrap: "wrap",
+            }}
+          >
+            <FormControl sx={{ minWidth: 200 }} size="small">
+              <InputLabel>Filtrar por Rodada</InputLabel>
+              <Select
+                value={selectedRound}
+                label="Filtrar por Rodada"
+                onChange={(e) => setSelectedRound(e.target.value)}
+              >
+                <MenuItem value="all">
+                  <em>Todas as Rodadas</em>
+                </MenuItem>
+                {allRoundKeys.map((key) => (
+                  <MenuItem key={key} value={key}>
+                    {key}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <Button
+              variant="contained"
+              onClick={handleGeneratePdf}
+              disabled={isGeneratingPdf || isGeneratingSimplePdf}
+              startIcon={
+                isGeneratingPdf ? (
+                  <CircularProgress size={20} color="inherit" />
+                ) : (
+                  <DownloadIcon />
+                )
+              }
+            >
+              Exportar Completo
+            </Button>
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={handleGenerateSimplePdf}
+              disabled={isGeneratingSimplePdf || isGeneratingPdf}
+              startIcon={
+                isGeneratingSimplePdf ? (
+                  <CircularProgress size={20} color="inherit" />
+                ) : (
+                  <ShareIcon />
+                )
+              }
+            >
+              Exportar Confrontos
+            </Button>
+          </Box>
+        )}
+      </Box>
 
       {podeGerarPdf && (
-        <Paper elevation={2} sx={{ p: 2, mb: 4 }}>
-          <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} md={6}>
-              <TextField
-                label="Buscar por time ou grupo..."
-                variant="outlined"
-                fullWidth
-                size="small"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Filtrar por Rodada</InputLabel>
-                <Select
-                  value={selectedRound}
-                  label="Filtrar por Rodada"
-                  onChange={(e) => setSelectedRound(e.target.value)}
-                >
-                  <MenuItem value="all">
-                    <em>Todas as Rodadas</em>
-                  </MenuItem>
-                  {allRoundKeys.map((key) => (
-                    <MenuItem key={key} value={key}>
-                      {key}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Box
-                sx={{
-                  display: "flex",
-                  gap: 1,
-                  flexDirection: { xs: "column", sm: "row" },
-                }}
-              >
-                <Button
-                  fullWidth
-                  variant="contained"
-                  onClick={handleGeneratePdf}
-                  disabled={isGeneratingPdf || isGeneratingSimplePdf}
-                  startIcon={
-                    isGeneratingPdf ? (
-                      <CircularProgress size={20} />
-                    ) : (
-                      <DownloadIcon />
-                    )
-                  }
-                >
-                  Completo
-                </Button>
-                <Button
-                  fullWidth
-                  variant="contained"
-                  color="secondary"
-                  onClick={handleGenerateSimplePdf}
-                  disabled={isGeneratingSimplePdf || isGeneratingPdf}
-                  startIcon={
-                    isGeneratingSimplePdf ? (
-                      <CircularProgress size={20} />
-                    ) : (
-                      <ShareIcon />
-                    )
-                  }
-                >
-                  Confrontos
-                </Button>
-              </Box>
-            </Grid>
-          </Grid>
-        </Paper>
+        <TextField
+          label="Buscar por time ou grupo..."
+          variant="outlined"
+          fullWidth
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          sx={{ mb: 4 }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon />
+              </InputAdornment>
+            ),
+          }}
+        />
       )}
 
       {loading && (
