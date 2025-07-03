@@ -68,7 +68,6 @@ const styles = StyleSheet.create({
     padding: 6,
     justifyContent: "center",
   },
-  // Colunas com larguras fixas para máxima estabilidade
   colGroup: { width: 50 },
   colMandante: { width: 190 },
   colPlacar: { width: 105 },
@@ -142,7 +141,6 @@ const RelatorioConfrontosDocument = ({ matchesByRound, apiUrl }) => (
           <View key={roundName} wrap={false}>
             <Text style={styles.roundTitle}>{roundName}</Text>
             <View style={styles.table}>
-              {/* Cabeçalho */}
               <View style={[styles.tableRow, styles.tableHeader]}>
                 <View style={[styles.tableCell, styles.colGroup]}>
                   <Text style={styles.headerTextCell}>Grupo</Text>
@@ -158,63 +156,70 @@ const RelatorioConfrontosDocument = ({ matchesByRound, apiUrl }) => (
                 </View>
               </View>
 
-              {/* Corpo da Tabela */}
               {matchesByRound[roundName]
                 .sort((a, b) => a.group.localeCompare(b.group))
-                .map((match) => (
-                  <View key={match.id} style={styles.tableRow}>
-                    <View style={[styles.tableCell, styles.colGroup]}>
-                      <Text style={styles.groupText}>{match.group}</Text>
-                    </View>
-                    <View style={[styles.tableCell, styles.colMandante]}>
-                      <View style={styles.teamCell}>
-                        <Image
-                          style={styles.escudo}
-                          src={`${apiUrl}/api/image-proxy?url=${encodeURIComponent(
-                            match.home_team.url_escudo
-                          )}`}
-                        />
-                        <View style={styles.teamInfo}>
-                          <Text style={styles.teamName}>
-                            {truncateText(match.home_team.nome, 20)}
+                .map((match) => {
+                  const homeScore = match.home_team.score;
+                  const awayScore = match.away_team.score;
+                  return (
+                    <View key={match.id} style={styles.tableRow}>
+                      <View style={[styles.tableCell, styles.colGroup]}>
+                        <Text style={styles.groupText}>{match.group}</Text>
+                      </View>
+                      <View style={[styles.tableCell, styles.colMandante]}>
+                        <View style={styles.teamCell}>
+                          <Image
+                            style={styles.escudo}
+                            src={`${apiUrl}/api/image-proxy?url=${encodeURIComponent(
+                              match.home_team.url_escudo
+                            )}`}
+                          />
+                          <View style={styles.teamInfo}>
+                            <Text style={styles.teamName}>
+                              {truncateText(match.home_team.nome, 20)}
+                            </Text>
+                            <Text style={styles.cartolaName}>
+                              {truncateText(match.home_team.nome_cartola, 22)}
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
+                      <View style={[styles.tableCell, styles.colPlacar]}>
+                        <View style={styles.scoreCell}>
+                          <Text style={styles.scoreText}>
+                            {typeof homeScore === "number"
+                              ? homeScore.toFixed(2)
+                              : "-"}
                           </Text>
-                          <Text style={styles.cartolaName}>
-                            {truncateText(match.home_team.nome_cartola, 22)}
+                          <Text style={styles.vsText}>vs</Text>
+                          <Text style={styles.scoreText}>
+                            {typeof awayScore === "number"
+                              ? awayScore.toFixed(2)
+                              : "-"}
                           </Text>
                         </View>
                       </View>
-                    </View>
-                    <View style={[styles.tableCell, styles.colPlacar]}>
-                      <View style={styles.scoreCell}>
-                        <Text style={styles.scoreText}>
-                          {(Number(match.home_team.score) || 0).toFixed(2)}
-                        </Text>
-                        <Text style={styles.vsText}>vs</Text>
-                        <Text style={styles.scoreText}>
-                          {(Number(match.away_team.score) || 0).toFixed(2)}
-                        </Text>
-                      </View>
-                    </View>
-                    <View style={[styles.tableCell, styles.colVisitante]}>
-                      <View style={styles.teamCell}>
-                        <Image
-                          style={styles.escudo}
-                          src={`${apiUrl}/api/image-proxy?url=${encodeURIComponent(
-                            match.away_team.url_escudo
-                          )}`}
-                        />
-                        <View style={styles.teamInfo}>
-                          <Text style={styles.teamName}>
-                            {truncateText(match.away_team.nome, 20)}
-                          </Text>
-                          <Text style={styles.cartolaName}>
-                            {truncateText(match.away_team.nome_cartola, 22)}
-                          </Text>
+                      <View style={[styles.tableCell, styles.colVisitante]}>
+                        <View style={styles.teamCell}>
+                          <Image
+                            style={styles.escudo}
+                            src={`${apiUrl}/api/image-proxy?url=${encodeURIComponent(
+                              match.away_team.url_escudo
+                            )}`}
+                          />
+                          <View style={styles.teamInfo}>
+                            <Text style={styles.teamName}>
+                              {truncateText(match.away_team.nome, 20)}
+                            </Text>
+                            <Text style={styles.cartolaName}>
+                              {truncateText(match.away_team.nome_cartola, 22)}
+                            </Text>
+                          </View>
                         </View>
                       </View>
                     </View>
-                  </View>
-                ))}
+                  );
+                })}
             </View>
           </View>
         ))}

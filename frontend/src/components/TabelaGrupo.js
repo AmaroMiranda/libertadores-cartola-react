@@ -119,17 +119,19 @@ const TimeCardMobile = ({ time, index, rounds }) => {
         </AccordionSummary>
         <AccordionDetails sx={{ backgroundColor: "rgba(0,0,0,0.2)", p: 2 }}>
           <Grid container spacing={1} justifyContent="center">
-            {/* CORREÇÃO AQUI: Usa o índice para exibir R1, R2, etc. */}
-            {rounds.map((r, roundIndex) => (
-              <Grid item xs={4} sm={2} key={r} sx={{ textAlign: "center" }}>
-                <Typography variant="caption" color="text.secondary">
-                  Rod. {roundIndex + 1}
-                </Typography>
-                <Typography sx={{ fontFamily: "monospace", fontWeight: 500 }}>
-                  {(time.pontuacoes?.[`rodada_${r}`] || 0).toFixed(2)}
-                </Typography>
-              </Grid>
-            ))}
+            {rounds.map((r, roundIndex) => {
+              const score = time.pontuacoes?.[`rodada_${r}`];
+              return (
+                <Grid item xs={4} sm={2} key={r} sx={{ textAlign: "center" }}>
+                  <Typography variant="caption" color="text.secondary">
+                    Rod. {roundIndex + 1}
+                  </Typography>
+                  <Typography sx={{ fontFamily: "monospace", fontWeight: 500 }}>
+                    {typeof score === "number" ? score.toFixed(2) : "-"}
+                  </Typography>
+                </Grid>
+              );
+            })}
           </Grid>
         </AccordionDetails>
       </Accordion>
@@ -186,15 +188,22 @@ const TimeRowDesktop = ({ time, index, rounds }) => (
         </Box>
       </Box>
     </TableCell>
-    {rounds.map((r) => (
-      <TableCell
-        key={`${time.id}-${r}`}
-        align="center"
-        sx={{ fontFamily: "monospace", fontSize: "0.9rem", fontWeight: "bold" }}
-      >
-        {(time.pontuacoes?.[`rodada_${r}`] || 0).toFixed(2)}
-      </TableCell>
-    ))}
+    {rounds.map((r) => {
+      const score = time.pontuacoes?.[`rodada_${r}`];
+      return (
+        <TableCell
+          key={`${time.id}-${r}`}
+          align="center"
+          sx={{
+            fontFamily: "monospace",
+            fontSize: "0.9rem",
+            fontWeight: "bold",
+          }}
+        >
+          {typeof score === "number" ? score.toFixed(2) : "-"}
+        </TableCell>
+      );
+    })}
     <TableCell
       align="right"
       sx={{
@@ -266,7 +275,6 @@ function TabelaGrupo({ nomeGrupo, times, rounds }) {
                 <TableCell sx={{ width: "40%", fontWeight: "bold" }}>
                   Time / Cartoleiro
                 </TableCell>
-                {/* CORREÇÃO AQUI: Usa o índice para exibir R1, R2, etc. */}
                 {rounds.map((r, index) => (
                   <TableCell key={r} align="center" sx={{ fontWeight: "bold" }}>
                     R{index + 1}

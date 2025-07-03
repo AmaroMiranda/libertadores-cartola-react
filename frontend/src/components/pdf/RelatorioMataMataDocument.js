@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
     borderRightWidth: 0.5,
     borderBottomWidth: 0.5,
     borderRightColor: "gray",
-    borderBottomColor: "#00E5FF", // Borda inferior principal em ciano
+    borderBottomColor: "#00E5FF",
   },
   tableRow: {
     flexDirection: "row",
@@ -65,8 +65,8 @@ const styles = StyleSheet.create({
   tableCell: {
     borderTopWidth: 0.5,
     borderLeftWidth: 0.5,
-    borderTopColor: "#00E5FF", // Linhas horizontais em ciano
-    borderLeftColor: "gray", // Linhas verticais em cinza
+    borderTopColor: "#00E5FF",
+    borderLeftColor: "gray",
     padding: 8,
     justifyContent: "center",
   },
@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
   subScoreText: {
     fontSize: 9,
     fontFamily: "Courier",
-    color: "#EAEAEA", // Cor melhorada para facilitar a visualização
+    color: "#EAEAEA",
     textAlign: "center",
     marginTop: 3,
   },
@@ -171,11 +171,17 @@ const TeamDisplay = ({ team, aggregateScore, roundScores, apiUrl }) => {
       </View>
       <View style={styles.scoreInfo}>
         <Text style={styles.aggregateScore}>
-          {(aggregateScore || 0).toFixed(2)}
+          {typeof aggregateScore === "number" ? aggregateScore.toFixed(2) : "-"}
         </Text>
         <Text style={styles.subScoreText}>
-          Ida: {(roundScores.ida || 0).toFixed(2)} | Volta:{" "}
-          {(roundScores.volta || 0).toFixed(2)}
+          Ida:{" "}
+          {typeof roundScores.ida === "number"
+            ? roundScores.ida.toFixed(2)
+            : "-"}{" "}
+          | Volta:{" "}
+          {typeof roundScores.volta === "number"
+            ? roundScores.volta.toFixed(2)
+            : "-"}
         </Text>
       </View>
     </View>

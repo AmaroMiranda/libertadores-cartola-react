@@ -29,11 +29,17 @@ function MatchCard({ match }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-  const homeScore = Number(match.home_team.score) || 0;
-  const awayScore = Number(match.away_team.score) || 0;
+  const homeScore = match.home_team.score;
+  const awayScore = match.away_team.score;
 
-  const isHomeWinner = homeScore > awayScore;
-  const isAwayWinner = awayScore > homeScore;
+  const isHomeWinner =
+    typeof homeScore === "number" &&
+    typeof awayScore === "number" &&
+    homeScore > awayScore;
+  const isAwayWinner =
+    typeof homeScore === "number" &&
+    typeof awayScore === "number" &&
+    awayScore > homeScore;
 
   const TeamDisplay = ({ team, score, isWinner }) => (
     <Box
@@ -75,7 +81,7 @@ function MatchCard({ match }) {
           mt: 1,
         }}
       >
-        {score.toFixed(2)}
+        {typeof score === "number" ? score.toFixed(2) : "-"}
       </Typography>
     </Box>
   );
@@ -97,7 +103,6 @@ function MatchCard({ match }) {
           flexDirection: isMobile ? "column" : "row",
         }}
       >
-        {/* Layout Mobile e Desktop condicional */}
         {isMobile ? (
           <>
             <TeamDisplay
