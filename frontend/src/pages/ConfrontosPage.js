@@ -58,7 +58,7 @@ function ConfrontosPage() {
     fetchConfrontos();
   }, []);
 
-  const matchesByRound = useMemo(() => {
+  const matchesByRoundAndGroup = useMemo(() => {
     const filteredMatches =
       selectedRound === "all"
         ? matches
@@ -161,19 +161,13 @@ function ConfrontosPage() {
 
   const allRoundKeys = useMemo(
     () =>
-      Object.keys(
-        matches.reduce((acc, match) => {
-          const roundTitle = `Rodada ${match.league_round}`;
-          acc[roundTitle] = true;
-          return acc;
-        }, {})
-      ).sort(
+      [...new Set(matches.map((match) => `Rodada ${match.league_round}`))].sort(
         (a, b) => parseInt(a.match(/\d+/)[0]) - parseInt(b.match(/\d+/)[0])
       ),
     [matches]
   );
 
-  const roundKeys = Object.keys(matchesByRound).sort(
+  const roundKeys = Object.keys(matchesByRoundAndGroup).sort(
     (a, b) => parseInt(a.match(/\d+/)[0]) - parseInt(b.match(/\d+/)[0])
   );
   const podeGerarPdf = !loading && !error && matches.length > 0;
@@ -283,14 +277,17 @@ function ConfrontosPage() {
                   {roundName}
                 </Typography>
                 <Box sx={{ p: { xs: 1, sm: 2 } }}>
-                  {Object.keys(matchesByRound[roundName])
+                  {Object.keys(matchesByRoundAndGroup[roundName])
                     .sort()
                     .map((groupName) => (
-                      <Box key={groupName} sx={{ mb: 3 }}>
+                      <Box
+                        key={groupName}
+                        sx={{ mb: 4, "&:last-child": { mb: 0 } }}
+                      >
                         <Typography
                           variant="h6"
                           sx={{
-                            color: "primary.main",
+                            color: "primary.main", // Cor do rótulo alterada aqui
                             mb: 2,
                             pl: 1,
                             fontWeight: "bold",
@@ -299,11 +296,13 @@ function ConfrontosPage() {
                           Grupo {groupName}
                         </Typography>
                         <Grid container spacing={2}>
-                          {matchesByRound[roundName][groupName].map((match) => (
-                            <Grid item xs={12} md={6} key={match.id}>
-                              <MatchCard match={match} />
-                            </Grid>
-                          ))}
+                          {matchesByRoundAndGroup[roundName][groupName].map(
+                            (match) => (
+                              <Grid item xs={12} md={6} key={match.id}>
+                                <MatchCard match={match} />
+                              </Grid>
+                            )
+                          )}
                         </Grid>
                       </Box>
                     ))}
