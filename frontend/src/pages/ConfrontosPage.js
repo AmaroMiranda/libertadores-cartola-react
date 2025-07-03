@@ -14,8 +14,10 @@ import {
   Select,
   MenuItem,
   Snackbar,
-  TextField, // Importar o TextField
+  TextField,
+  InputAdornment, // Importar
 } from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search"; // Importar
 import DownloadIcon from "@mui/icons-material/Download";
 import ShareIcon from "@mui/icons-material/Share";
 import MatchCard from "../components/MatchCard";
@@ -60,9 +62,7 @@ function ConfrontosPage() {
     fetchConfrontos();
   }, []);
 
-  // Lógica de filtragem atualizada para incluir o termo de busca
   const matchesByRoundAndGroup = useMemo(() => {
-    // 1. Filtra por rodada selecionada
     let filteredMatches =
       selectedRound === "all"
         ? matches
@@ -70,7 +70,6 @@ function ConfrontosPage() {
             (match) => `Rodada ${match.league_round}` === selectedRound
           );
 
-    // 2. Filtra adicionalmente pelo termo de busca
     if (searchTerm.trim() !== "") {
       const lowercasedFilter = searchTerm.toLowerCase();
       filteredMatches = filteredMatches.filter(
@@ -81,7 +80,6 @@ function ConfrontosPage() {
       );
     }
 
-    // 3. Agrupa o resultado final para exibição
     return filteredMatches.reduce((acc, match) => {
       const roundTitle = `Rodada ${match.league_round}`;
       if (!acc[roundTitle]) {
@@ -93,7 +91,7 @@ function ConfrontosPage() {
       acc[roundTitle][match.group].push(match);
       return acc;
     }, {});
-  }, [matches, selectedRound, searchTerm]); // Adiciona searchTerm como dependência
+  }, [matches, selectedRound, searchTerm]);
 
   const handleGeneratePdf = async () => {
     const originalMatchesByRound = matches.reduce((acc, match) => {
@@ -105,20 +103,16 @@ function ConfrontosPage() {
     if (selectedRound === "" || !Object.keys(originalMatchesByRound).length)
       return;
     setIsGeneratingPdf(true);
-
     try {
       let dataForPdf = originalMatchesByRound;
       let fileName = "relatorio-confrontos-todos.pdf";
-
       if (selectedRound !== "all") {
         dataForPdf = { [selectedRound]: originalMatchesByRound[selectedRound] };
-        const roundNumber =
-          originalMatchesByRound[selectedRound]?.[0]?.league_round || "rodada";
-        fileName = `relatorio-confrontos-rodada-${roundNumber}.pdf`;
+        fileName = `relatorio-confrontos-${selectedRound
+          .toLowerCase()
+          .replace(" ", "-")}.pdf`;
       }
-
       const API_BASE_URL = api.defaults.baseURL.replace("/api", "");
-
       const doc = (
         <RelatorioConfrontosDocument
           matchesByRound={dataForPdf}
@@ -128,8 +122,8 @@ function ConfrontosPage() {
       const blob = await pdf(doc).toBlob();
       await savePdf(blob, fileName, showFeedback);
     } catch (e) {
-      console.error("Erro ao gerar PDF dos confrontos:", e);
-      showFeedback("error", "Ocorreu um erro ao gerar o PDF.");
+      console.error("Erro ao gerar PDF:", e);
+      showFeedback("error", "Falha ao gerar o PDF.");
     } finally {
       setIsGeneratingPdf(false);
     }
@@ -145,20 +139,16 @@ function ConfrontosPage() {
     if (selectedRound === "" || !Object.keys(originalMatchesByRound).length)
       return;
     setIsGeneratingSimplePdf(true);
-
     try {
       let dataForPdf = originalMatchesByRound;
       let fileName = "relatorio-confrontos-simples-todos.pdf";
-
       if (selectedRound !== "all") {
         dataForPdf = { [selectedRound]: originalMatchesByRound[selectedRound] };
-        const roundNumber =
-          originalMatchesByRound[selectedRound]?.[0]?.league_round || "rodada";
-        fileName = `relatorio-confrontos-simples-rodada-${roundNumber}.pdf`;
+        fileName = `relatorio-confrontos-simples-${selectedRound
+          .toLowerCase()
+          .replace(" ", "-")}.pdf`;
       }
-
       const API_BASE_URL = api.defaults.baseURL.replace("/api", "");
-
       const doc = (
         <RelatorioConfrontosSimplesDocument
           matchesByRound={dataForPdf}
@@ -168,8 +158,8 @@ function ConfrontosPage() {
       const blob = await pdf(doc).toBlob();
       await savePdf(blob, fileName, showFeedback);
     } catch (e) {
-      console.error("Erro ao gerar PDF simples dos confrontos:", e);
-      showFeedback("error", "Ocorreu um erro ao gerar o PDF simplificado.");
+      console.error("Erro ao gerar PDF simples:", e);
+      showFeedback("error", "Falha ao gerar o PDF simplificado.");
     } finally {
       setIsGeneratingSimplePdf(false);
     }
@@ -190,89 +180,96 @@ function ConfrontosPage() {
 
   return (
     <Box>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 2, // Ajuste de margem
-          flexWrap: "wrap",
-          gap: 2,
-        }}
+      <Typography
+        variant="h4"
+        component="h1"
+        sx={{ fontWeight: "bold", mb: 4 }}
       >
-        <Typography variant="h4" component="h1" sx={{ fontWeight: "bold" }}>
-          Confrontos da Fase de Grupos
-        </Typography>
+        Confrontos da Fase de Grupos
+      </Typography>
 
-        {podeGerarPdf && (
-          <Box
-            sx={{
-              display: "flex",
-              gap: 2,
-              alignItems: "center",
-              flexWrap: "wrap",
-            }}
-          >
-            <FormControl sx={{ minWidth: 200 }} size="small">
-              <InputLabel>Filtrar por Rodada</InputLabel>
-              <Select
-                value={selectedRound}
-                label="Filtrar por Rodada"
-                onChange={(e) => setSelectedRound(e.target.value)}
-              >
-                <MenuItem value="all">
-                  <em>Todas as Rodadas</em>
-                </MenuItem>
-                {allRoundKeys.map((key) => (
-                  <MenuItem key={key} value={key}>
-                    {key}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <Button
-              variant="contained"
-              onClick={handleGeneratePdf}
-              disabled={isGeneratingPdf || isGeneratingSimplePdf}
-              startIcon={
-                isGeneratingPdf ? (
-                  <CircularProgress size={20} color="inherit" />
-                ) : (
-                  <DownloadIcon />
-                )
-              }
-            >
-              {isGeneratingPdf ? "Gerando..." : "Exportar Completo"}
-            </Button>
-            <Button
-              variant="contained"
-              color="secondary"
-              onClick={handleGenerateSimplePdf}
-              disabled={isGeneratingSimplePdf || isGeneratingPdf}
-              startIcon={
-                isGeneratingSimplePdf ? (
-                  <CircularProgress size={20} color="inherit" />
-                ) : (
-                  <ShareIcon />
-                )
-              }
-            >
-              {isGeneratingSimplePdf ? "Gerando..." : "Exportar Confrontos"}
-            </Button>
-          </Box>
-        )}
-      </Box>
-
-      {/* NOVO CAMPO DE BUSCA */}
       {podeGerarPdf && (
-        <TextField
-          label="Buscar por time"
-          variant="outlined"
-          fullWidth
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          sx={{ mb: 4 }}
-        />
+        <Paper elevation={2} sx={{ p: 2, mb: 4 }}>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Buscar por time ou grupo..."
+                variant="outlined"
+                fullWidth
+                size="small"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Filtrar por Rodada</InputLabel>
+                <Select
+                  value={selectedRound}
+                  label="Filtrar por Rodada"
+                  onChange={(e) => setSelectedRound(e.target.value)}
+                >
+                  <MenuItem value="all">
+                    <em>Todas as Rodadas</em>
+                  </MenuItem>
+                  {allRoundKeys.map((key) => (
+                    <MenuItem key={key} value={key}>
+                      {key}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: 1,
+                  flexDirection: { xs: "column", sm: "row" },
+                }}
+              >
+                <Button
+                  fullWidth
+                  variant="contained"
+                  onClick={handleGeneratePdf}
+                  disabled={isGeneratingPdf || isGeneratingSimplePdf}
+                  startIcon={
+                    isGeneratingPdf ? (
+                      <CircularProgress size={20} />
+                    ) : (
+                      <DownloadIcon />
+                    )
+                  }
+                >
+                  Completo
+                </Button>
+                <Button
+                  fullWidth
+                  variant="contained"
+                  color="secondary"
+                  onClick={handleGenerateSimplePdf}
+                  disabled={isGeneratingSimplePdf || isGeneratingPdf}
+                  startIcon={
+                    isGeneratingSimplePdf ? (
+                      <CircularProgress size={20} />
+                    ) : (
+                      <ShareIcon />
+                    )
+                  }
+                >
+                  Confrontos
+                </Button>
+              </Box>
+            </Grid>
+          </Grid>
+        </Paper>
       )}
 
       {loading && (
