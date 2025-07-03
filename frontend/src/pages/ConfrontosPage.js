@@ -290,7 +290,7 @@ function ConfrontosPage() {
                         <Typography
                           variant="h6"
                           sx={{
-                            color: "secondary.main",
+                            color: "primary.main",
                             mb: 2,
                             pl: 1,
                             fontWeight: "bold",
