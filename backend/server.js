@@ -535,6 +535,10 @@ async function processarMataMata() {
     const settingsData = await Settings.findOne({ singleton: true }).lean();
     
     const groupRounds = settingsData?.group_stage_rounds || [];
+	    if (groupRounds.length < 6) {
+        // Retorna uma estrutura vazia se as rodadas não estiverem completas
+        return { oitavasP: [], quartasP: [], semisP: [], finalP: [], vFinal: [], terceiroLugarP: [], vTerceiro: [] };
+    }
     const teamsWithTotals = teamsData.map(team => {
         const total = groupRounds.reduce((sum, r) => sum + (team.pontuacoes[`rodada_${r}`] || 0), 0);
         return { ...team, id: team._id.toString(), total };
