@@ -21,7 +21,6 @@ import MatchCard from "../components/MatchCard";
 import { pdf } from "@react-pdf/renderer";
 import { savePdf } from "../utils/download";
 import RelatorioConfrontosDocument from "../components/pdf/RelatorioConfrontosDocument";
-// Import the new simple report component
 import RelatorioConfrontosSimplesDocument from "../components/pdf/RelatorioConfrontosSimplesDocument";
 
 function ConfrontosPage() {
@@ -29,7 +28,6 @@ function ConfrontosPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
-  // New state for the simple report
   const [isGeneratingSimplePdf, setIsGeneratingSimplePdf] = useState(false);
   const [selectedRound, setSelectedRound] = useState("all");
   const [feedback, setFeedback] = useState({
@@ -61,25 +59,45 @@ function ConfrontosPage() {
   }, []);
 
   const matchesByRound = useMemo(() => {
-    return matches.reduce((acc, match) => {
+    const filteredMatches =
+      selectedRound === "all"
+        ? matches
+        : matches.filter(
+            (match) => `Rodada ${match.league_round}` === selectedRound
+          );
+
+    return filteredMatches.reduce((acc, match) => {
+      const roundTitle = `Rodada ${match.league_round}`;
+      if (!acc[roundTitle]) {
+        acc[roundTitle] = {};
+      }
+      if (!acc[roundTitle][match.group]) {
+        acc[roundTitle][match.group] = [];
+      }
+      acc[roundTitle][match.group].push(match);
+      return acc;
+    }, {});
+  }, [matches, selectedRound]);
+
+  const handleGeneratePdf = async () => {
+    const originalMatchesByRound = matches.reduce((acc, match) => {
       const roundTitle = `Rodada ${match.league_round}`;
       (acc[roundTitle] = acc[roundTitle] || []).push(match);
       return acc;
     }, {});
-  }, [matches]);
 
-  const handleGeneratePdf = async () => {
-    if (selectedRound === "" || !matchesByRound) return;
+    if (selectedRound === "" || !Object.keys(originalMatchesByRound).length)
+      return;
     setIsGeneratingPdf(true);
 
     try {
-      let dataForPdf = matchesByRound;
+      let dataForPdf = originalMatchesByRound;
       let fileName = "relatorio-confrontos-todos.pdf";
 
       if (selectedRound !== "all") {
-        dataForPdf = { [selectedRound]: matchesByRound[selectedRound] };
+        dataForPdf = { [selectedRound]: originalMatchesByRound[selectedRound] };
         const roundNumber =
-          matchesByRound[selectedRound][0]?.league_round || "rodada";
+          originalMatchesByRound[selectedRound]?.[0]?.league_round || "rodada";
         fileName = `relatorio-confrontos-rodada-${roundNumber}.pdf`;
       }
 
@@ -101,19 +119,25 @@ function ConfrontosPage() {
     }
   };
 
-  // New handler for the simple report
   const handleGenerateSimplePdf = async () => {
-    if (selectedRound === "" || !matchesByRound) return;
+    const originalMatchesByRound = matches.reduce((acc, match) => {
+      const roundTitle = `Rodada ${match.league_round}`;
+      (acc[roundTitle] = acc[roundTitle] || []).push(match);
+      return acc;
+    }, {});
+
+    if (selectedRound === "" || !Object.keys(originalMatchesByRound).length)
+      return;
     setIsGeneratingSimplePdf(true);
 
     try {
-      let dataForPdf = matchesByRound;
+      let dataForPdf = originalMatchesByRound;
       let fileName = "relatorio-confrontos-simples-todos.pdf";
 
       if (selectedRound !== "all") {
-        dataForPdf = { [selectedRound]: matchesByRound[selectedRound] };
+        dataForPdf = { [selectedRound]: originalMatchesByRound[selectedRound] };
         const roundNumber =
-          matchesByRound[selectedRound][0]?.league_round || "rodada";
+          originalMatchesByRound[selectedRound]?.[0]?.league_round || "rodada";
         fileName = `relatorio-confrontos-simples-rodada-${roundNumber}.pdf`;
       }
 
@@ -135,8 +159,24 @@ function ConfrontosPage() {
     }
   };
 
+  const allRoundKeys = useMemo(
+    () =>
+      Object.keys(
+        matches.reduce((acc, match) => {
+          const roundTitle = `Rodada ${match.league_round}`;
+          acc[roundTitle] = true;
+          return acc;
+        }, {})
+      ).sort(
+        (a, b) => parseInt(a.match(/\d+/)[0]) - parseInt(b.match(/\d+/)[0])
+      ),
+    [matches]
+  );
+
+  const roundKeys = Object.keys(matchesByRound).sort(
+    (a, b) => parseInt(a.match(/\d+/)[0]) - parseInt(b.match(/\d+/)[0])
+  );
   const podeGerarPdf = !loading && !error && matches.length > 0;
-  const roundKeys = Object.keys(matchesByRound).sort();
 
   return (
     <Box>
@@ -173,7 +213,7 @@ function ConfrontosPage() {
                 <MenuItem value="all">
                   <em>Todas as Rodadas</em>
                 </MenuItem>
-                {roundKeys.map((key) => (
+                {allRoundKeys.map((key) => (
                   <MenuItem key={key} value={key}>
                     {key}
                   </MenuItem>
@@ -194,7 +234,6 @@ function ConfrontosPage() {
             >
               {isGeneratingPdf ? "Gerando..." : "Exportar Completo"}
             </Button>
-            {/* New button for the simple report */}
             <Button
               variant="contained"
               color="secondary"
@@ -228,12 +267,12 @@ function ConfrontosPage() {
         </Alert>
       )}
       {!loading && !error && (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 4, mt: 4 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 5, mt: 4 }}>
           {roundKeys.length > 0 ? (
             roundKeys.map((roundName) => (
               <Paper key={roundName} elevation={3} sx={{ overflow: "hidden" }}>
                 <Typography
-                  variant="h6"
+                  variant="h5"
                   sx={{
                     p: 2,
                     borderBottom: "2px solid",
@@ -243,21 +282,38 @@ function ConfrontosPage() {
                 >
                   {roundName}
                 </Typography>
-                <Grid container spacing={2} sx={{ p: 2 }}>
-                  {matchesByRound[roundName]
-                    .sort((a, b) => a.group.localeCompare(b.group))
-                    .map((match) => (
-                      <Grid item xs={12} sm={6} lg={4} key={match.id}>
-                        <MatchCard match={match} />
-                      </Grid>
+                <Box sx={{ p: { xs: 1, sm: 2 } }}>
+                  {Object.keys(matchesByRound[roundName])
+                    .sort()
+                    .map((groupName) => (
+                      <Box key={groupName} sx={{ mb: 3 }}>
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            color: "secondary.main",
+                            mb: 2,
+                            pl: 1,
+                            fontWeight: "bold",
+                          }}
+                        >
+                          Grupo {groupName}
+                        </Typography>
+                        <Grid container spacing={2}>
+                          {matchesByRound[roundName][groupName].map((match) => (
+                            <Grid item xs={12} md={6} key={match.id}>
+                              <MatchCard match={match} />
+                            </Grid>
+                          ))}
+                        </Grid>
+                      </Box>
                     ))}
-                </Grid>
+                </Box>
               </Paper>
             ))
           ) : (
             <Alert severity="info">
-              Nenhum confronto gerado. Verifique se há grupos completos de 4
-              times e 6 rodadas configuradas no Painel de Gestão.
+              Nenhum confronto para exibir. Verifique o filtro de rodada ou se
+              há grupos e rodadas configurados no Painel de Gestão.
             </Alert>
           )}
         </Box>
