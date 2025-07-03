@@ -180,95 +180,91 @@ function ConfrontosPage() {
 
   return (
     <Box>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
-          gap: 2,
-          mb: 4,
-        }}
+      <Typography
+        variant="h4"
+        component="h1"
+        sx={{ fontWeight: "bold", mb: 3 }}
       >
-        <Typography variant="h4" component="h1" sx={{ fontWeight: "bold" }}>
-          Confrontos da Fase de Grupos
-        </Typography>
-
-        {podeGerarPdf && (
-          <Box
-            sx={{
-              display: "flex",
-              gap: 2,
-              alignItems: "center",
-              flexWrap: "wrap",
-            }}
-          >
-            <FormControl sx={{ minWidth: 200 }} size="small">
-              <InputLabel>Filtrar por Rodada</InputLabel>
-              <Select
-                value={selectedRound}
-                label="Filtrar por Rodada"
-                onChange={(e) => setSelectedRound(e.target.value)}
-              >
-                <MenuItem value="all">
-                  <em>Todas as Rodadas</em>
-                </MenuItem>
-                {allRoundKeys.map((key) => (
-                  <MenuItem key={key} value={key}>
-                    {key}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <Button
-              variant="contained"
-              onClick={handleGeneratePdf}
-              disabled={isGeneratingPdf || isGeneratingSimplePdf}
-              startIcon={
-                isGeneratingPdf ? (
-                  <CircularProgress size={20} color="inherit" />
-                ) : (
-                  <DownloadIcon />
-                )
-              }
-            >
-              Exportar Completo
-            </Button>
-            <Button
-              variant="contained"
-              color="secondary"
-              onClick={handleGenerateSimplePdf}
-              disabled={isGeneratingSimplePdf || isGeneratingPdf}
-              startIcon={
-                isGeneratingSimplePdf ? (
-                  <CircularProgress size={20} color="inherit" />
-                ) : (
-                  <ShareIcon />
-                )
-              }
-            >
-              Exportar Confrontos
-            </Button>
-          </Box>
-        )}
-      </Box>
+        Confrontos da Fase de Grupos
+      </Typography>
 
       {podeGerarPdf && (
-        <TextField
-          label="Buscar por time ou grupo..."
-          variant="outlined"
-          fullWidth
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          sx={{ mb: 4 }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon />
-              </InputAdornment>
-            ),
-          }}
-        />
+        <Box>
+          <Paper elevation={2} sx={{ p: 2, mb: 3 }}>
+            <Grid container spacing={2} alignItems="center">
+              <Grid item xs={12} sm={8}>
+                <FormControl fullWidth size="small">
+                  <InputLabel>Filtrar por Rodada</InputLabel>
+                  <Select
+                    value={selectedRound}
+                    label="Filtrar por Rodada"
+                    onChange={(e) => setSelectedRound(e.target.value)}
+                  >
+                    <MenuItem value="all">
+                      <em>Todas as Rodadas</em>
+                    </MenuItem>
+                    {allRoundKeys.map((key) => (
+                      <MenuItem key={key} value={key}>
+                        {key}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <Box sx={{ display: "flex", gap: 1 }}>
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    onClick={handleGeneratePdf}
+                    disabled={isGeneratingPdf || isGeneratingSimplePdf}
+                    startIcon={
+                      isGeneratingPdf ? (
+                        <CircularProgress size={20} />
+                      ) : (
+                        <DownloadIcon />
+                      )
+                    }
+                  >
+                    Completo
+                  </Button>
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    color="secondary"
+                    onClick={handleGenerateSimplePdf}
+                    disabled={isGeneratingSimplePdf || isGeneratingPdf}
+                    startIcon={
+                      isGeneratingSimplePdf ? (
+                        <CircularProgress size={20} />
+                      ) : (
+                        <ShareIcon />
+                      )
+                    }
+                  >
+                    Simples
+                  </Button>
+                </Box>
+              </Grid>
+            </Grid>
+          </Paper>
+
+          <TextField
+            label="Buscar por time ou grupo..."
+            variant="outlined"
+            fullWidth
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            sx={{ mb: 4 }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Box>
       )}
 
       {loading && (
